@@ -14,7 +14,7 @@
 }
 
 .App-header {
-  background-color: #282c34;
+  background-color: beige;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -22,10 +22,25 @@
   justify-content: center;
   font-size: calc(10px + 2vmin);
   color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.App-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: linear-gradient(to bottom, transparent 95%, rgba(0, 0, 0, 0.1) 95%);
+  background-size: 100% 40px; /* 40px space between lines */
+  z-index: 0; /* Ensure the lines stay behind other content */
 }
 
 .App-link {
   color: #61dafb;
+  z-index: 1; /* Ensure link is above the lines */
 }
 
 @keyframes App-logo-spin {
