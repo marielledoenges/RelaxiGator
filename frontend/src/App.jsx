@@ -1,26 +1,27 @@
-import "./App.css";
-import { useState, useEffect } from 'react';
-import UserInputForm from './components/UserInput';
-import Calendar from "./components/Calendar";
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import ProtectedRoute from './components/ProtectedRoute'; // Import the ProtectedRoute
 
 function App() {
-
-  return (<div className="min-h-screen bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 animate-gradient-xy"
-  style={{
-    backgroundSize: '400% 400%',
-  }}
->
-  <div className="container mx-auto px-4 py-8">
-    <div className="backdrop-blur-sm bg-white/10 rounded-lg shadow-xl p-8">
-      <h1 className="text-4xl font-bold text-white text-center mb-8 tracking-wide">
-        RELAXIGATOR
-      </h1>
-      <UserInputForm />
-      <Calendar />
-    </div>
-  </div>
-</div>
-);
+  return (
+    <Router>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        {/* Protect the /home route */}
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Redirect to login if no other route is matched */}
+        <Route path="/" element={<Navigate to="/login" />} />
+      </Routes>
+    </Router>
+  );
 }
 
 export default App;
