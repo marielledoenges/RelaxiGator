@@ -20,8 +20,9 @@ app.listen(PORT, () => {
 });
 
 app.post('/saveUserData', async (req, res) => {
-  const { mentalState, productivity, nutrition, userId } = req.body;
-  console.log(mentalState,productivity,nutrition,userId);
+  const { mentalState, productivity, nutrition } = req.body;
+  console.log(mentalState,productivity,nutrition);
+  res.status(200).send('Data saved successfully');
   /*try {
     // Create a reference to the user's document in Firestore
     const userDoc = db.collection('users').doc(userId);
