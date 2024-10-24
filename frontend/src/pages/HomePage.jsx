@@ -1,5 +1,3 @@
-// frontend/src/pages/HomePage.jsx
-
 import React from "react";
 import Calendar from "../components/Calendar";
 import UserInputForm from "../components/UserInput"; // Assuming this is the Journal component
