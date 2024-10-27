@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
   createUserWithEmailAndPassword,
 } from "firebase/auth";
 import { auth, googleProvider } from "../firebase/firebase";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,24 +15,62 @@ const Login = () => {
 
   const navigate = useNavigate(); // Initialize navigate
 
-  // Handle Email/Password login
+  // Clear error when toggling between login and account creation modes
+  useEffect(() => {
+    setError("");
+  }, [isCreatingAccount]);
+
+  // Password validation function
+  const validatePassword = (password) => {
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return passwordRegex.test(password);
+  };
+
+  // Handle Email/Password login or account creation
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    // Check password requirements if creating an account
+    if (isCreatingAccount && !validatePassword(password)) {
+      setError(
+        "Password must be at least 8 characters long and contain a capital letter, lowercase letter, number, and symbol."
+      );
+      return;
+    }
+
     try {
       if (isCreatingAccount) {
         await createUserWithEmailAndPassword(auth, email, password);
         console.log("Account created successfully");
+        navigate("/home"); // Redirect to HomePage after successful account creation
       } else {
         await signInWithEmailAndPassword(auth, email, password);
         console.log("Logged in successfully");
+        navigate("/home"); // Redirect to HomePage after successful login
       }
-      navigate("/home"); // Redirect to HomePage after login
     } catch (err) {
-      setError(
-        isCreatingAccount
-          ? "Failed to create account. Check your email and password."
-          : "Failed to log in. Check your email and password."
-      );
+      if (isCreatingAccount) {
+        if (err.code === "auth/email-already-in-use") {
+          setError(
+            "An account with this email already exists. Please log in instead."
+          );
+        } else if (err.code === "auth/weak-password") {
+          setError("Password should be at least 6 characters.");
+        } else {
+          setError("Failed to create account. Check your email and password.");
+        }
+      } else {
+        if (err.code === "auth/user-not-found") {
+          setError(
+            "No account found with this email. Please create an account."
+          );
+        } else if (err.code === "auth/wrong-password") {
+          setError("Incorrect password. Please try again.");
+        } else {
+          setError("Failed to log in. Check your email and password.");
+        }
+      }
     }
   };
 
@@ -62,7 +100,7 @@ const Login = () => {
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)} // Corrected this line
+            onChange={(e) => setEmail(e.target.value)}
             className="border rounded w-full py-2 px-3"
             required
           />
@@ -72,7 +110,7 @@ const Login = () => {
           <input
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)} // Corrected this line
+            onChange={(e) => setPassword(e.target.value)}
             className="border rounded w-full py-2 px-3"
             required
           />
