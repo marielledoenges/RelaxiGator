@@ -5,33 +5,34 @@ import {
   createUserWithEmailAndPassword,
 } from "firebase/auth";
 import { auth, googleProvider } from "../firebase/firebase";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
 
-const Login = () => {
+const Login = ({ onLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isCreatingAccount, setIsCreatingAccount] = useState(false); // Track account creation mode
 
-  const navigate = useNavigate(); // Initialize navigate
-
-  // Handle Email/Password login
+  // Handle Email/Password login or account creation
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError(""); // Clear previous errors
     try {
       if (isCreatingAccount) {
-        await createUserWithEmailAndPassword(auth, email, password);
-        console.log("Account created successfully");
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        console.log("Account created successfully:", userCredential.user);
+        onLogin(); // Trigger onLogin to set isAuthenticated in App
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
-        console.log("Logged in successfully");
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        console.log("Logged in successfully:", userCredential.user);
+        onLogin(); // Trigger onLogin to set isAuthenticated in App
       }
-      navigate("/home"); // Redirect to HomePage after login
     } catch (err) {
+      console.error("Error Code:", err.code);
+      console.error("Error Message:", err.message);
       setError(
         isCreatingAccount
-          ? "Failed to create account. Check your email and password."
-          : "Failed to log in. Check your email and password."
+          ? `Failed to create account: ${err.message}`
+          : `Failed to log in: ${err.message}`
       );
     }
   };
@@ -39,11 +40,13 @@ const Login = () => {
   // Handle Google login
   const handleGoogleLogin = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
-      console.log("Logged in with Google successfully");
-      navigate("/home"); // Redirect to HomePage after Google login
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log("Logged in with Google successfully:", result.user);
+      onLogin(); // Trigger onLogin to set isAuthenticated in App
     } catch (err) {
-      setError("Failed to log in with Google.");
+      console.error("Google login error - Code:", err.code);
+      console.error("Google login error - Message:", err.message);
+      setError(`Failed to log in with Google: ${err.message}`);
     }
   };
 
@@ -62,7 +65,7 @@ const Login = () => {
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)} // Corrected this line
+            onChange={(e) => setEmail(e.target.value)}
             className="border rounded w-full py-2 px-3"
             required
           />
@@ -72,7 +75,7 @@ const Login = () => {
           <input
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)} // Corrected this line
+            onChange={(e) => setPassword(e.target.value)}
             className="border rounded w-full py-2 px-3"
             required
           />
@@ -88,7 +91,10 @@ const Login = () => {
         <div className="mt-4">
           <button
             type="button"
-            onClick={() => setIsCreatingAccount(!isCreatingAccount)}
+            onClick={() => {
+              setIsCreatingAccount(!isCreatingAccount);
+              setError(""); // Clear error when toggling modes
+            }}
             className="text-blue-500 hover:underline"
           >
             {isCreatingAccount
