@@ -69,7 +69,9 @@ const SearchBar = () => {
   }, [query]);
 
   return (
+    
     <div className=" max-w-screen mx-auto p-6 bg-white rounded-lg shadow-lg mb-4 flex flex-col md:flex-row">
+      
   {/* Search Bar */}
   <div className="flex-1 mr-4">
     <input
