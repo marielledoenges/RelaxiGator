@@ -2,7 +2,9 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import { useState } from 'react';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
+import NutritionPage from './pages/NutritionPage';
 import NavBar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -33,6 +35,17 @@ function App() {
                 isAuthenticated ? <Navigate to="/home" /> : <LoginPage onLogin={handleLogin} />
               }
             />
+            <Route
+          path="/nutrition"
+          element={
+            <ProtectedRoute>
+              <NutritionPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Redirect to login if no other route is matched */}
+        <Route path="/" element={<Navigate to="/login" />} />
+
             {/* Protected home page; redirect to login if not authenticated */}
             <Route
               path="/home"

@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
   createUserWithEmailAndPassword,
 } from "firebase/auth";
 import { auth, googleProvider } from "../firebase/firebase";
+import { useNavigate } from "react-router-dom";
 
 const Login = ({ onLogin }) => {
   const [email, setEmail] = useState("");
@@ -12,28 +13,64 @@ const Login = ({ onLogin }) => {
   const [error, setError] = useState("");
   const [isCreatingAccount, setIsCreatingAccount] = useState(false); // Track account creation mode
 
+  const navigate = useNavigate(); // Initialize navigate
+
+  // Clear error when toggling between login and account creation modes
+  useEffect(() => {
+    setError("");
+  }, [isCreatingAccount]);
+
+  // Password validation function
+  const validatePassword = (password) => {
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return passwordRegex.test(password);
+  };
+
   // Handle Email/Password login or account creation
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError(""); // Clear previous errors
+
+    // Check password requirements if creating an account
+    if (isCreatingAccount && !validatePassword(password)) {
+      setError(
+        "Password must be at least 8 characters long and contain a capital letter, lowercase letter, number, and symbol."
+      );
+      return;
+    }
+
     try {
       if (isCreatingAccount) {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        console.log("Account created successfully:", userCredential.user);
-        onLogin(); // Trigger onLogin to set isAuthenticated in App
+        await createUserWithEmailAndPassword(auth, email, password);
+        console.log("Account created successfully");
+        navigate("/home"); // Redirect to HomePage after successful account creation
       } else {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        console.log("Logged in successfully:", userCredential.user);
-        onLogin(); // Trigger onLogin to set isAuthenticated in App
+        await signInWithEmailAndPassword(auth, email, password);
+        console.log("Logged in successfully");
+        navigate("/home"); // Redirect to HomePage after successful login
       }
     } catch (err) {
-      console.error("Error Code:", err.code);
-      console.error("Error Message:", err.message);
-      setError(
-        isCreatingAccount
-          ? `Failed to create account: ${err.message}`
-          : `Failed to log in: ${err.message}`
-      );
+      if (isCreatingAccount) {
+        if (err.code === "auth/email-already-in-use") {
+          setError(
+            "An account with this email already exists. Please log in instead."
+          );
+        } else if (err.code === "auth/weak-password") {
+          setError("Password should be at least 6 characters.");
+        } else {
+          setError("Failed to create account. Check your email and password.");
+        }
+      } else {
+        if (err.code === "auth/user-not-found") {
+          setError(
+            "No account found with this email. Please create an account."
+          );
+        } else if (err.code === "auth/wrong-password") {
+          setError("Incorrect password. Please try again.");
+        } else {
+          setError("Failed to log in. Check your email and password.");
+        }
+      }
     }
   };
 
