@@ -5,6 +5,8 @@ import LoginPage from './pages/LoginPage';
 import NutritionPage from './pages/NutritionPage';
 import NavBar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
+import Calendar from './components/Calendar';
+import CalendarPage from './pages/CalendarPage';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -41,6 +43,15 @@ function App() {
               element={
                 <ProtectedRoute isAuthenticated={isAuthenticated}>
                   <NutritionPage />
+                </ProtectedRoute>
+              }
+            />
+            {/* Protected Calendar page */}
+            <Route
+              path="/calendar"
+              element={
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <CalendarPage />
                 </ProtectedRoute>
               }
             />

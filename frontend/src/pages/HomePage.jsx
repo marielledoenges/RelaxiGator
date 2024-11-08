@@ -14,12 +14,12 @@ const HomePage = () => {
           <h1 className="text-4xl font-bold text-white text-center mb-8 tracking-wide">
             RELAXIGATOR
           </h1>
-          <Link to="/nutrition">
+          {/* <Link to="/nutrition">
             <button>Search Foods</button>
-          </Link>
+          </Link> */}
           {/* Calendar and Journal Components */}
           <UserInputForm /> 
-          <Calendar />
+          {/* <Calendar /> */}
           
         </div>
       </div>
