@@ -1,10 +1,10 @@
 import React from "react";
-import Login from "../components/Login"; // Importing the Login component
+import Login from "../components/Login";
 
-const LoginPage = () => {
+const LoginPage = ({ onLogin }) => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500">
-      <Login /> {/* Render the Login component here */}
+      <Login onLogin={onLogin} />
     </div>
   );
 };

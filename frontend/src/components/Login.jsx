@@ -7,7 +7,7 @@ import {
 import { auth, googleProvider } from "../firebase/firebase";
 import { useNavigate } from "react-router-dom";
 
-const Login = () => {
+const Login = ({ onLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -77,11 +77,13 @@ const Login = () => {
   // Handle Google login
   const handleGoogleLogin = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
-      console.log("Logged in with Google successfully");
-      navigate("/home"); // Redirect to HomePage after Google login
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log("Logged in with Google successfully:", result.user);
+      onLogin(); // Trigger onLogin to set isAuthenticated in App
     } catch (err) {
-      setError("Failed to log in with Google.");
+      console.error("Google login error - Code:", err.code);
+      console.error("Google login error - Message:", err.message);
+      setError(`Failed to log in with Google: ${err.message}`);
     }
   };
 
@@ -126,7 +128,10 @@ const Login = () => {
         <div className="mt-4">
           <button
             type="button"
-            onClick={() => setIsCreatingAccount(!isCreatingAccount)}
+            onClick={() => {
+              setIsCreatingAccount(!isCreatingAccount);
+              setError(""); // Clear error when toggling modes
+            }}
             className="text-blue-500 hover:underline"
           >
             {isCreatingAccount
