@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 
 const NavBar = ({ onLogout }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -20,12 +21,18 @@ const NavBar = ({ onLogout }) => {
       {/* Expanded Menu */}
       {isExpanded && (
         <div className="mt-4 flex flex-col space-y-4 text-lg">
-          <button
-            onClick={() => console.log("Navigate to Home")}
+          <Link
+            to="/home"
             className="hover:bg-gray-700 px-4 py-2 rounded"
           >
             Home
-          </button>
+          </Link>
+          <Link
+            to="/nutrition"
+            className="hover:bg-gray-700 px-4 py-2 rounded"
+          >
+            Nutrition
+          </Link>
           <button
             onClick={onLogout}
             className="hover:bg-gray-700 px-4 py-2 rounded"

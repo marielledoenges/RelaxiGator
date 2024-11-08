@@ -35,18 +35,16 @@ function App() {
                 isAuthenticated ? <Navigate to="/home" /> : <LoginPage onLogin={handleLogin} />
               }
             />
+            {/* Protected Nutrition page */}
             <Route
-          path="/nutrition"
-          element={
-            <ProtectedRoute>
-              <NutritionPage />
-            </ProtectedRoute>
-          }
-        />
-        {/* Redirect to login if no other route is matched */}
-        <Route path="/" element={<Navigate to="/login" />} />
-
-            {/* Protected home page; redirect to login if not authenticated */}
+              path="/nutrition"
+              element={
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <NutritionPage />
+                </ProtectedRoute>
+              }
+            />
+            {/* Protected Home page */}
             <Route
               path="/home"
               element={
