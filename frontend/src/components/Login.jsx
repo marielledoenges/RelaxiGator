@@ -11,11 +11,10 @@ const Login = ({ onLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isCreatingAccount, setIsCreatingAccount] = useState(false); // Track account creation mode
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
 
-  const navigate = useNavigate(); // Initialize navigate
+  const navigate = useNavigate(); // Initialize navigation
 
-  // Clear error when toggling between login and account creation modes
   useEffect(() => {
     setError("");
   }, [isCreatingAccount]);
@@ -27,11 +26,39 @@ const Login = ({ onLogin }) => {
     return passwordRegex.test(password);
   };
 
+  // Function to send token to backend
+  const sendTokenToBackend = async (token) => {
+    try {
+      const response = await fetch("http://localhost:5000/getUserData", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Pass the Firebase ID token
+        },
+      });
+
+      if (!response.ok) {
+        const backendError = await response.json();
+        throw new Error(
+          backendError.error || "Failed to authenticate with the backend"
+        );
+      }
+
+      const data = await response.json();
+      console.log("User data from backend:", data);
+
+      onLogin(data.userId);
+      navigate("/home"); // Navigate to the HomePage
+    } catch (err) {
+      console.error("Error sending token to backend:", err);
+      setError(err.message || "Failed to authenticate. Please try again.");
+    }
+  };
+
   // Handle Email/Password login or account creation
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    // Check password requirements if creating an account
     if (isCreatingAccount && !validatePassword(password)) {
       setError(
         "Password must be at least 8 characters long and contain a capital letter, lowercase letter, number, and symbol."
@@ -40,37 +67,27 @@ const Login = ({ onLogin }) => {
     }
 
     try {
+      let userCredential;
+
       if (isCreatingAccount) {
-        await createUserWithEmailAndPassword(auth, email, password);
-        console.log("Account created successfully");
-        navigate("/home"); // Redirect to HomePage after successful account creation
+        userCredential = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+        console.log("Account created successfully:", userCredential.user);
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
-        console.log("Logged in successfully");
-        navigate("/home"); // Redirect to HomePage after successful login
+        userCredential = await signInWithEmailAndPassword(auth, email, password);
+        console.log("Logged in successfully:", userCredential.user);
       }
+
+      const token = await userCredential.user.getIdToken();
+      await sendTokenToBackend(token);
     } catch (err) {
-      if (isCreatingAccount) {
-        if (err.code === "auth/email-already-in-use") {
-          setError(
-            "An account with this email already exists. Please log in instead."
-          );
-        } else if (err.code === "auth/weak-password") {
-          setError("Password should be at least 6 characters.");
-        } else {
-          setError("Failed to create account. Check your email and password.");
-        }
-      } else {
-        if (err.code === "auth/user-not-found") {
-          setError(
-            "No account found with this email. Please create an account."
-          );
-        } else if (err.code === "auth/wrong-password") {
-          setError("Incorrect password. Please try again.");
-        } else {
-          setError("Failed to log in. Check your email and password.");
-        }
-      }
+      console.error("Authentication error:", err.code, err.message);
+      setError(
+        `Error: ${err.code || "unknown"} - ${err.message || "An error occurred"}`
+      );
     }
   };
 
@@ -78,12 +95,16 @@ const Login = ({ onLogin }) => {
   const handleGoogleLogin = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
+      const token = await result.user.getIdToken();
       console.log("Logged in with Google successfully:", result.user);
-      onLogin(); // Trigger onLogin to set isAuthenticated in App
+      await sendTokenToBackend(token);
     } catch (err) {
-      console.error("Google login error - Code:", err.code);
-      console.error("Google login error - Message:", err.message);
-      setError(`Failed to log in with Google: ${err.message}`);
+      console.error("Google login error:", err.code, err.message);
+      setError(
+        `Google Login Error: ${err.code || "unknown"} - ${
+          err.message || "An error occurred"
+        }`
+      );
     }
   };
 
@@ -124,13 +145,12 @@ const Login = ({ onLogin }) => {
           {isCreatingAccount ? "Create Account" : "Login"}
         </button>
 
-        {/* Toggle between Login and Create Account */}
         <div className="mt-4">
           <button
             type="button"
             onClick={() => {
               setIsCreatingAccount(!isCreatingAccount);
-              setError(""); // Clear error when toggling modes
+              setError("");
             }}
             className="text-blue-500 hover:underline"
           >
@@ -140,7 +160,6 @@ const Login = ({ onLogin }) => {
           </button>
         </div>
 
-        {/* Google login button with Google logo */}
         <div className="mt-4 flex justify-center">
           <button
             type="button"
