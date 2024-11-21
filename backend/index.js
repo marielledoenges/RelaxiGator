@@ -1,66 +1,126 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const db = require("./firebase");
-const admin = require("firebase-admin");
-//const bodyParser = require('body-parser');
-//const admin = require('firebase-admin');
-
-//const serviceAccount = require('./path-to-your-serviceAccountKey.json');
-//const db = admin.firestore();
+const { admin, db } = require("./firebase"); // Import admin and db from firebase.js
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-//app.use(bodyParser.json());
 
-// define routes here
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
-app.post("/saveUserData", async (req, res) => {
-  const { mentalState, productivity, nutrition} = req.body;
-  console.log("hello")
-  // Validate required fields
-  if (!mentalState || !productivity || !nutrition) {
-    return res.status(400).send({ error: "All fields are required, including 'day'." });
+// Middleware to verify Firebase token and get user ID
+const verifyToken = async (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1]; // Extract Bearer token
+  if (!token) {
+    return res.status(401).send({ error: "Authorization token is required." });
   }
 
-  // Use a specific user ID (replace this with actual user authentication in production)
-  const userId = "p7L1YfzTHouiVaG1VRuj";
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    req.user = { uid: decodedToken.uid, email: decodedToken.email }; // Attach user info to request
+    next();
+  } catch (error) {
+    console.error("Token verification error:", error);
+    res.status(403).send({ error: "Unauthorized access." });
+  }
+};
+
+// Save user data (write/update into Firestore)
+app.post("/saveUserData", verifyToken, async (req, res) => {
+  const { mentalState, productivity, nutrition } = req.body;
+  const userId = req.user.uid; // Retrieve userId from token verification
+
+  if (!mentalState || !productivity || !nutrition) {
+    return res.status(400).send({ error: "All fields are required." });
+  }
 
   try {
-    // Create the DailyLog entry
     const dailyLogData = {
       Mood: mentalState,
       Productivity: productivity,
-      Calories: nutrition,
-      Timestamp: new Date().toISOString(), // Optional timestamp for logging
+      Nutrition: nutrition,
+      Timestamp: new Date().toISOString(),
     };
 
-    // Reference to the user's document in the `userData` collection
-    const userDocRef = db.collection("userData").doc(userId);
+    const userDocRef = db.collection("userData").doc(userId); // Reference user's document
+    const dailyLogKey = `DailyLog.${new Date().toISOString()}`; // Dynamic key for logs
 
-    // Firestore update payload
-    const updateData = {};
-    const dailyLogKey = `DailyLog${1}`; // Construct the key dynamically
-    
+    // Update Firestore with new data
+    await userDocRef.set(
+      { MonthlyLog: { [dailyLogKey]: dailyLogData } }, // Add/update the MonthlyLog field
+      { merge: true }
+    );
 
-    // Update the specific field within the MonthlyLog map
-    await userDocRef.update({
-      [`MonthlyLog.${dailyLogKey}`]: dailyLogData,
-    });
-
-    // Update the Firestore document with the new DailyLog
-    await userDocRef.set(updateData, { merge: true }); // Use merge to avoid overwriting existing data
-
-    console.log(`User data saved for DailyLog${1}:`, dailyLogData);
-    res.status(200).send({ message: `DailyLog${1} added successfully!` });
+    console.log(`User data saved for ${userId}:`, dailyLogData);
+    res.status(200).send({ message: "User data saved successfully!" });
   } catch (error) {
     console.error("Error saving user data:", error);
     res.status(500).send({ error: "Failed to save user data." });
   }
+});
+
+app.get("/getUserData", verifyToken, async (req, res) => {
+  const userId = req.user.uid;
+
+  try {
+    const userDocRef = db.collection("userData").doc(userId);
+    const userDoc = await userDocRef.get();
+
+    if (!userDoc.exists) {
+      // If user document does not exist, create one
+      const timestamp = new Date().toISOString();
+      const newUserData = {
+        createdAt: timestamp,
+        MonthlyLog: {
+          DailyLog1: {
+            Calories: "",
+            Food: "",
+            Mood: "",
+            Productivity: "",
+            Timestamp: timestamp,
+          },
+        },
+      };
+
+      console.log(`Creating new document for user ${userId}`);
+      await userDocRef.set(newUserData); // Create the document
+      console.log(`Initialized user document for ${userId}`);
+      return res.status(200).send(newUserData);
+    }
+
+    // If document exists, return its data
+    console.log("Retrieved user data:", userDoc.data());
+    res.status(200).send(userDoc.data());
+  } catch (error) {
+    console.error("Error retrieving or initializing user data:", error);
+    res.status(500).send({ error: "Failed to retrieve or initialize user data." });
+  }
+});
+
+
+// Initialize user data explicitly (optional endpoint)
+app.post("/initializeUser", verifyToken, async (req, res) => {
+  const userId = req.user.uid;
+
+  try {
+    const userDocRef = db.collection("userData").doc(userId);
+
+    const userDoc = await userDocRef.get();
+    if (!userDoc.exists) {
+      await userDocRef.set({
+        createdAt: new Date().toISOString(),
+        MonthlyLog: {},
+      });
+      console.log(`Initialized user document for ${userId}`);
+    }
+
+    res.status(200).send({ message: "User initialized successfully!" });
+  } catch (error) {
+    console.error("Error initializing user:", error);
+    res.status(500).send({ error: "Failed to initialize user." });
+  }
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
