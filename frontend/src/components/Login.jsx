@@ -29,31 +29,30 @@ const Login = ({ onLogin }) => {
   // Function to send token to backend
   const sendTokenToBackend = async (token) => {
     try {
-      const response = await fetch("http://localhost:5000/getUserData", {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/getUserData`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Pass the Firebase ID token
+          Authorization: `Bearer ${token}`,
         },
       });
-
+  
       if (!response.ok) {
         const backendError = await response.json();
-        throw new Error(
-          backendError.error || "Failed to authenticate with the backend"
-        );
+        throw new Error(backendError.error || "Failed to authenticate with the backend");
       }
-
+  
       const data = await response.json();
       console.log("User data from backend:", data);
-
+  
       onLogin(data.userId);
-      navigate("/home"); // Navigate to the HomePage
+      navigate("/home");
     } catch (err) {
       console.error("Error sending token to backend:", err);
       setError(err.message || "Failed to authenticate. Please try again.");
     }
   };
+  
 
   // Handle Email/Password login or account creation
   const handleLogin = async (e) => {
