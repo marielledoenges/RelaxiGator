@@ -1,142 +1,181 @@
-  import React, { useState, useEffect } from 'react';
-  import { auth } from '../firebase/firebase';
+import React, { useState, useEffect } from "react";
+import { auth } from "../firebase/firebase";
 
-  const MOODS = [
-    { emoji: '😄', label: 'Happy' },
-    { emoji: '😢', label: 'Sad' },
-    { emoji: '😔', label: 'Depressed' },
-    { emoji: '😌', label: 'Calm' },
-    { emoji: '😠', label: 'Angry' },
-  ];
+const MOODS = [
+  { emoji: "😄", label: "Happy" },
+  { emoji: "😢", label: "Sad" },
+  { emoji: "😔", label: "Depressed" },
+  { emoji: "😌", label: "Calm" },
+  { emoji: "😠", label: "Angry" },
+];
 
-  const UserInputForm = () => {
-    const [selectedMood, setSelectedMood] = useState('');
-    const [productivity, setProductivity] = useState('');
-    const [foodItems, setFoodItems] = useState('');
-    const [journalEntry, setJournalEntry] = useState('');
-    const [isSubmitted, setIsSubmitted] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
-    const [existingLog, setExistingLog] = useState(null); // Holds today's log if it exists
+const UserInputForm = () => {
+  const [selectedMood, setSelectedMood] = useState("");
+  const [productivity, setProductivity] = useState("");
+  const [foodItems, setFoodItems] = useState("");
+  const [journalEntry, setJournalEntry] = useState("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [existingLog, setExistingLog] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
 
-    useEffect(() => {
-      const checkDailyLog = async () => {
-        try {
-          const token = await auth.currentUser.getIdToken();
-          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/checkDailyLog`, {
-            method: 'GET',
+  useEffect(() => {
+    const checkDailyLog = async () => {
+      try {
+        const token = await auth.currentUser.getIdToken();
+        const response = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/checkDailyLog`,
+          {
+            method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          });
-
-          if (response.ok) {
-            const { logExists, data } = await response.json();
-            if (logExists) {
-              setExistingLog(data); // If log exists, store it
-            }
-          } else {
-            setErrorMessage("Failed to check daily log.");
           }
-        } catch (error) {
-          console.error("Error checking daily log:", error);
-          setErrorMessage("An error occurred while checking the daily log.");
-        }
-      };
-
-      checkDailyLog();
-    }, []);
-
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-
-      const currentDate = new Date();
-      const data = {
-        mentalState: selectedMood,
-        productivity,
-        food_items: foodItems,
-        submitted: true,
-        submission_date: `${currentDate.getMonth() + 1}/${currentDate.getDate()}/${currentDate.getFullYear()}`,
-      };
-
-      try {
-        const token = await auth.currentUser.getIdToken();
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/saveUserData`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(data),
-        });
+        );
 
         if (response.ok) {
-          setIsSubmitted(true);
+          const { logExists, data } = await response.json();
+          if (logExists) {
+            setExistingLog(data);
+          }
         } else {
-          const errorResponse = await response.json();
-          setErrorMessage(errorResponse.error || 'Failed to submit data.');
+          setErrorMessage("Failed to check daily log.");
         }
       } catch (error) {
-        setErrorMessage('An error occurred while submitting the data.');
+        console.error("Error checking daily log:", error);
+        setErrorMessage("An error occurred while checking the daily log.");
       }
     };
 
-    if (existingLog) {
-      return (
-        <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-purple-500 to-pink-500">
-          <div className="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-lg text-center">
-            <h2 className="text-4xl font-bold text-purple-700 mb-6">Today's Wellness Log</h2>
-            
-            <div className="flex flex-col items-start space-y-4">
-              <p className="text-lg text-gray-800">
-                <span className="font-semibold text-purple-600">Mood: </span>
-                <span className="text-2xl">{existingLog.Mood}</span>
-              </p>
-              <p className="text-lg text-gray-800">
-                <span className="font-semibold text-purple-600">Productivity: </span>
-                {existingLog.Productivity} hours
-              </p>
-              <p className="text-lg text-gray-800">
-                <span className="font-semibold text-purple-600">Food Items: </span>
-                {existingLog.FoodItems.join(', ')}
-              </p>
-              <p className="text-lg text-gray-800">
-                <span className="font-semibold text-purple-600">Journal Entry: </span>
-                {existingLog.JournalEntry || 'N/A'}
-              </p>
-            </div>
-    
-            <button
-              className="mt-6 px-6 py-3 bg-purple-600 text-white rounded-full shadow-lg hover:bg-purple-700 transition duration-300"
-              onClick={() => console.log('Edit Log button pressed!')}
-            >
-              Edit Log
-            </button>
-          </div>
-        </div>
+    checkDailyLog();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const currentDate = new Date();
+    const data = {
+      mentalState: selectedMood,
+      productivity,
+      food_items: foodItems,
+      submitted: true,
+      submission_date: `${
+        currentDate.getMonth() + 1
+      }/${currentDate.getDate()}/${currentDate.getFullYear()}`,
+    };
+
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/saveUserData`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(data),
+        }
       );
+
+      if (response.ok) {
+        setExistingLog(data); // Update the log with the saved data
+        setIsSubmitted(true);
+        setIsEditing(false); // Exit editing mode
+        setTimeout(() => {
+          setIsSubmitted(false); // Clear success message
+        }, 2000); // Show success message for 2 seconds
+      } else {
+        const errorResponse = await response.json();
+        setErrorMessage(errorResponse.error || "Failed to submit data.");
+      }
+    } catch (error) {
+      setErrorMessage("An error occurred while submitting the data.");
     }
-    
+  };
 
+  const handleEdit = () => {
+    setSelectedMood(existingLog?.Mood || "");
+    setProductivity(existingLog?.Productivity || "");
+    setFoodItems(existingLog?.FoodItems?.join(", ") || "");
+    setJournalEntry(existingLog?.JournalEntry || "");
+    setIsEditing(true);
+    setIsSubmitted(false);
+  };
+
+  if (!isEditing && existingLog && !isSubmitted) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-100 to-purple-100">
-        {!isSubmitted ? (
-          <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md space-y-6">
-            <h2 className="text-3xl font-bold text-center text-gray-800">Daily Wellness Log</h2>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="p-6 rounded-xl shadow-lg w-full max-w-sm text-center bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900">
+          <h2 className="text-2xl font-mono font-bold text-purple-700 mb-4">
+            Today's Wellness Log
+          </h2>
 
-            {errorMessage && <div className="text-red-500 text-center">{errorMessage}</div>}
+          <div className="font-mono text-left text-slate-400 space-y-2">
+            <p>
+              <span className="font-semibold text-purple-600">Mood:</span>{" "}
+              {existingLog.Mood || "N/A"}
+            </p>
+            <p>
+              <span className="font-semibold text-purple-600">
+                Productivity:
+              </span>{" "}
+              {existingLog.Productivity || "N/A"} hours
+            </p>
+            <p>
+              <span className="font-semibold text-purple-600">Food Items:</span>{" "}
+              {Array.isArray(existingLog.FoodItems)
+                ? existingLog.FoodItems.join(", ")
+                : "N/A"}
+            </p>
+            <p>
+              <span className="font-semibold text-purple-600">
+                Journal Entry:
+              </span>{" "}
+              {existingLog.JournalEntry || "N/A"}
+            </p>
+          </div>
+
+          <button
+            className="mt-4 px-4 py-2 bg-purple-600 text-white font-mono rounded-full shadow-md hover:bg-purple-700 transition"
+            onClick={handleEdit}
+          >
+            Edit Log
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex justify-center items-center min-h-screen">
+      {!isSubmitted ? (
+        <div className="p-6 rounded-xl shadow-lg w-full max-w-sm bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <h2 className="text-2xl font-mono font-bold text-center text-gray-200">
+              {isEditing ? "Edit Your Wellness Log" : "Daily Wellness Log"}
+            </h2>
+
+            {errorMessage && (
+              <div className="text-red-500 text-center text-sm">
+                {errorMessage}
+              </div>
+            )}
 
             <div>
-              <label className="block text-gray-700 font-semibold mb-4">How are you feeling today?</label>
+              <label className="block text-gray-400 font-mono font-semibold mb-2">
+                How are you feeling today?
+              </label>
               <div className="flex justify-between">
                 {MOODS.map((mood) => (
                   <button
                     key={mood.label}
                     type="button"
                     onClick={() => setSelectedMood(mood.label)}
-                    className={`text-4xl p-2 rounded-full transition-all duration-200 ${
+                    className={`text-3xl p-1 rounded-full transition-all duration-200 ${
                       selectedMood === mood.label
-                        ? 'bg-blue-500 text-white scale-110'
-                        : 'hover:bg-blue-100'
+                        ? "bg-blue-500 text-white scale-110"
+                        : "hover:bg-gray-600"
                     }`}
                   >
                     {mood.emoji}
@@ -146,54 +185,63 @@
             </div>
 
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Productivity (hours):</label>
+              <label className="block text-gray-400 font-mono font-semibold mb-2">
+                Productivity (hours):
+              </label>
               <input
                 type="number"
                 value={productivity}
                 onChange={(e) => setProductivity(e.target.value)}
                 placeholder="Enter productive hours"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-1 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-900 text-gray-200 text-sm"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Food Items:</label>
+              <label className="block text-gray-400 font-mono font-semibold mb-2">
+                Food Items:
+              </label>
               <input
                 type="text"
                 value={foodItems}
                 onChange={(e) => setFoodItems(e.target.value)}
                 placeholder="Enter food items (comma-separated)"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-1 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-900 text-gray-200 text-sm"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Journal Entry (Optional):</label>
+              <label className="block text-gray-400 font-mono font-semibold mb-2">
+                Journal Entry (Optional):
+              </label>
               <textarea
                 value={journalEntry}
                 onChange={(e) => setJournalEntry(e.target.value)}
                 placeholder="Write about your day..."
-                className="w-full px-4 py-2 border rounded-lg h-24 resize-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-1 border rounded-lg h-20 resize-none focus:ring-2 focus:ring-blue-500 bg-gray-900 text-gray-200 text-sm"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-300"
+              className="w-full bg-blue-600 text-white font-mono py-2 rounded-lg hover:bg-blue-700 transition"
             >
-              Submit Daily Log
+              {isEditing ? "Save Changes" : "Submit Daily Log"}
             </button>
           </form>
-        ) : (
-          <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md text-center">
-            <h2 className="text-3xl font-bold text-pink-600 mb-4">Log Submitted!</h2>
-            <p className="text-gray-700">Thank you for tracking your wellness.</p>
-          </div>
-        )}
-      </div>
-    );
-  };
+        </div>
+      ) : (
+        <div className="p-6 rounded-xl shadow-lg w-full max-w-sm text-center bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900">
+          <h2 className="text-2xl font-mono font-bold text-pink-600 mb-3">
+            Log Submitted!
+          </h2>
+          <p className="text-gray-300">Thank you for tracking your wellness.</p>
+        </div>
+      )}
+    </div>
+  );
+};
 
-  export default UserInputForm;
+export default UserInputForm;
