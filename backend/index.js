@@ -33,60 +33,53 @@ const verifyToken = async (req, res, next) => {
 
 // Save or update user data
 app.post("/saveUserData", verifyToken, async (req, res) => {
-  const { mentalState, productivity, nutrition } = req.body;
+  const { mentalState, productivity, food_items, submitted, submission_date } = req.body;
   const userId = req.user?.uid;
-
-  if (!mentalState || !productivity || !nutrition) {
+ 
+  if (!mentalState || !productivity || !food_items) {
     console.error("Missing required fields in request body:", req.body);
     return res.status(400).send({ error: "All fields are required." });
   }
-
+ 
   try {
     const userDocRef = db.collection("userData").doc(userId);
-
-    // Check if the user's document exists
-    const userDoc = await userDocRef.get();
-
-    if (!userDoc.exists) {
-      console.log("Creating new user document for user:", userId);
-
-      // Initialize the document with default values and add the first log
-      await userDocRef.set({
-        createdAt: new Date().toISOString(),
-        MonthlyLog: {
-          DailyLog1: {
-            Mood: mentalState,
-            Productivity: productivity,
-            Calories: nutrition,
-            Timestamp: new Date().toISOString(),
-          },
-        },
-      });
-
-      return res.status(200).send({ message: "User data initialized and log saved!" });
-    }
-
-    // If the document exists, update it with a new log
+    const submissionDate = new Date(submission_date);
+    const monthKey = `${submissionDate.getFullYear()}${submissionDate.getMonth() + 1}Log`;
+    const dayKey = `Day${submissionDate.getDate()}`;
+ 
     const dailyLogData = {
       Mood: mentalState,
       Productivity: productivity,
-      Calories: nutrition,
+      FoodItems: food_items.split(',').map(item => item.trim()),
+      Submitted: submitted,
+      SubmissionDate: submission_date,
       Timestamp: new Date().toISOString(),
     };
-
-    const dailyLogKey = `DailyLog.${new Date().toISOString()}`;
+ 
+    const userDoc = await userDocRef.get(userId);
+    console.log(`User data updated successfully for ${userId}`);
+    if (!userDoc.exists) {
+      await userDocRef.set({
+        createdAt: new Date().toISOString(),
+        [monthKey]: {
+          [dayKey]: dailyLogData
+        },
+      });
+ 
+      return res.status(200).send({ message: "User data initialized and log saved!" });
+    }
+ 
     await userDocRef.update({
-      [`MonthlyLog.${dailyLogKey}`]: dailyLogData,
+      [`${monthKey}.${dayKey}`]: dailyLogData,
     });
-
+ 
     console.log(`User data updated successfully for ${userId}`);
     res.status(200).send({ message: "User data saved successfully!" });
   } catch (error) {
     console.error("Error saving user data:", error);
     res.status(500).send({ error: "Failed to save user data." });
   }
-});
-
+ });
 // Get user data
 app.get("/getUserData", verifyToken, async (req, res) => {
   const userId = req.user.uid;
