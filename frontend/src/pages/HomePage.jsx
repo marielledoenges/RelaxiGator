@@ -2,6 +2,7 @@ import React from "react";
 import Calendar from "../components/Calendar";
 import UserInputForm from "../components/UserInput"; // Assuming this is the Journal component
 import {Link} from 'react-router-dom';
+import GoalsPage from "../components/Goals";
 
 const HomePage = () => {
   return (
@@ -19,6 +20,7 @@ const HomePage = () => {
           </Link> */}
           {/* Calendar and Journal Components */}
           <UserInputForm /> 
+          <GoalsPage/>
           {/* <Calendar /> */}
           
         </div>
