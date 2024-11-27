@@ -29,22 +29,27 @@ const Login = ({ onLogin }) => {
   // Function to send token to backend
   const sendTokenToBackend = async (token) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/getUserData`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-  
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/getUserData`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       if (!response.ok) {
         const backendError = await response.json();
-        throw new Error(backendError.error || "Failed to authenticate with the backend");
+        throw new Error(
+          backendError.error || "Failed to authenticate with the backend"
+        );
       }
-  
+
       const data = await response.json();
       console.log("User data from backend:", data);
-  
+
       onLogin(data.userId);
       navigate("/home");
     } catch (err) {
@@ -52,7 +57,6 @@ const Login = ({ onLogin }) => {
       setError(err.message || "Failed to authenticate. Please try again.");
     }
   };
-  
 
   // Handle Email/Password login or account creation
   const handleLogin = async (e) => {
@@ -113,27 +117,29 @@ const Login = ({ onLogin }) => {
         onSubmit={handleLogin}
         className="w-full max-w-sm p-8 bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 rounded-lg shadow-2xl"
       >
-        <h2 className="text-2xl mb-6">
+        <h2 className="text-2xl mb-6 text-center text-gray-300">
           {isCreatingAccount ? "Create Account" : "Login"}
         </h2>
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <div className="mb-4">
-          <label className="block text-slate-400">Email:</label>
+          <label className="block text-gray-400 mb-2">Email:</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="border rounded w-full py-2 px-3"
+            placeholder="Enter your email"
+            className="w-full px-4 py-2 border rounded-lg bg-gray-900 text-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             required
           />
         </div>
         <div className="mb-4">
-          <label className="block text-slate-400">Password:</label>
+          <label className="block text-gray-400 mb-2">Password:</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="border rounded w-full py-2 px-3"
+            placeholder="Enter your password"
+            className="w-full px-4 py-2 border rounded-lg bg-gray-900 text-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             required
           />
         </div>
@@ -144,14 +150,14 @@ const Login = ({ onLogin }) => {
           {isCreatingAccount ? "Create Account" : "Login"}
         </button>
 
-        <div className="mt-4">
+        <div className="mt-4 text-center">
           <button
             type="button"
             onClick={() => {
               setIsCreatingAccount(!isCreatingAccount);
               setError("");
             }}
-            className="text-blue-500 hover:underline"
+            className="text-blue-400 hover:underline"
           >
             {isCreatingAccount
               ? "Already have an account? Login"
@@ -163,12 +169,12 @@ const Login = ({ onLogin }) => {
           <button
             type="button"
             onClick={handleGoogleLogin}
-            className="flex items-center justify-center bg-white shadow-sm rounded-lg p-2 transition ease-in duration-100 hover:bg-slate-400"
+            className="flex items-center justify-center bg-slate-600 shadow-sm rounded-lg p-2 transition ease-in duration-100 hover:bg-slate-500"
           >
             <img
               src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"
               alt="Google logo"
-              className="h-6 w-6"
+
             />
           </button>
         </div>
