@@ -203,6 +203,50 @@ app.get("/getGoals", verifyToken, async (req, res) => {
   }
 });
 
+// Backend - Retrieve all user log entries for a given year
+app.get("/getUserLogsForYear", verifyToken, async (req, res) => {
+  const userId = req.user.uid;
+  const year = req.query.year; // e.g., 2024
+
+  if (!year) {
+    return res.status(400).send({ error: "Year is required." });
+  }
+
+  try {
+    const userDocRef = db.collection("userData").doc(userId);
+    const userDoc = await userDocRef.get();
+
+    if (!userDoc.exists) {
+      return res.status(404).send({ error: "No user data found." });
+    }
+
+    const data = userDoc.data();
+    const logs = [];
+
+    // Iterate through the months
+    for (let month = 1; month <= 12; month++) {
+      const monthKey = `${year}${month}Log`;
+      if (data[monthKey]) {
+        // Iterate through the days in each month
+        for (let day = 1; day <= 31; day++) {
+          const dayKey = `Day${day}`;
+          if (data[monthKey][dayKey]) {
+            logs.push({
+              date: `${month}/${day}/${year}`,
+              log: data[monthKey][dayKey]
+            });
+          }
+        }
+      }
+    }
+
+    res.status(200).send(logs);
+  } catch (error) {
+    console.error("Error fetching user logs:", error);
+    res.status(500).send({ error: "Failed to fetch user logs." });
+  }
+});
+
 
 // Start server
 const PORT = process.env.PORT || 5000;

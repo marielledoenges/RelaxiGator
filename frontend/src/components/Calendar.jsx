@@ -1,155 +1,108 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
+import Calendar from "react-calendar"; // install react-calendar
+import "react-calendar/dist/Calendar.css"; // import calendar styles
+import { auth } from "../firebase/firebase"; // firebase authentication
 
-const Calendar = () => {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [noteInput, setNoteInput] = useState('');
-  const [notes, setNotes] = useState({});
+const CalendarComponent = () => {
+  const [userLogs, setUserLogs] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [logData, setLogData] = useState(null);
 
-  // Get days in month
-  const getDaysInMonth = (date) => {
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  };
+  useEffect(() => {
+    // Fetch user logs from the backend when the component mounts
+    const fetchLogs = async () => {
+      try {
+        const token = await auth.currentUser.getIdToken();
+        const response = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/getUserLogsForYear?year=2024`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setUserLogs(data);
+        } else {
+          console.error("Failed to fetch user logs.");
+        }
+      } catch (error) {
+        console.error("Error fetching user logs:", error);
+      }
+    };
 
-  // Get first day of month (0 = Sunday, 1 = Monday, etc.)
-  const getFirstDayOfMonth = (date) => {
-    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-  };
+    fetchLogs();
+  }, []);
 
-  // Generate calendar days
-  const generateDays = () => {
-    const daysInMonth = getDaysInMonth(currentDate);
-    const firstDay = getFirstDayOfMonth(currentDate);
-    const days = [];
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
+    const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
 
-    // Add empty cells for days before the first day of month
-    for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="p-4"></div>);
-    }
-
-    // Add actual days
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateKey = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}-${day}`;
-      const hasNote = notes[dateKey];
-      
-      days.push(
-        <div
-          key={day}
-          onClick={() => handleDayClick(day)}
-          className={`p-4 border cursor-pointer hover:bg-gray-100 relative ${
-            hasNote ? 'bg-blue-50' : ''
-          }`}
-        >
-          <span className="font-medium">{day}</span>
-          {hasNote && (
-            <div className="mt-1 text-xs text-gray-600 overflow-hidden text-ellipsis">
-              {notes[dateKey]}
-            </div>
-          )}
-        </div>
-      );
-    }
-    return days;
-  };
-
-  // Handle day click
-  const handleDayClick = (day) => {
-    setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day));
-    setIsDialogOpen(true);
-  };
-
-  // Handle note submission
-  const handleSubmitNote = () => {
-    if (selectedDate && noteInput.trim()) {
-      const dateKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth() + 1}-${selectedDate.getDate()}`;
-      setNotes(prev => ({
-        ...prev,
-        [dateKey]: noteInput
-      }));
-      setNoteInput('');
-      setIsDialogOpen(false);
+    // Find log data for the selected date
+    const log = userLogs.find((log) => log.date === formattedDate);
+    if (log) {
+      setLogData(log.log);
+    } else {
+      setLogData(null); // No log data for the selected day
     }
   };
-
-  // Navigate months
-  const navigateMonth = (direction) => {
-    setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + direction, 1));
-  };
-
-  const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        {/* Calendar Header */}
-        <div className="flex items-center justify-between mb-6">
-          <button
-            className="px-4 py-2 border rounded hover:bg-gray-100"
-            onClick={() => navigateMonth(-1)}
-          >
-            ←
-          </button>
-          <h2 className="text-xl font-semibold">
-            {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-          </h2>
-          <button
-            className="px-4 py-2 border rounded hover:bg-gray-100"
-            onClick={() => navigateMonth(1)}
-          >
-            →
-          </button>
-        </div>
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-pink-300 to-purple-400">
+      <div className="w-full max-w-4xl bg-white p-8 rounded-xl shadow-lg">
+        <h2 className="text-4xl font-bold text-center text-gray-800 mb-8">
+          Wellness Log Calendar
+        </h2>
 
-        {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-1">
-          {/* Week days */}
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} className="p-4 text-center font-semibold text-gray-600">
-              {day}
-            </div>
-          ))}
-          {/* Calendar days */}
-          {generateDays()}
-        </div>
-
-        {/* Modal Dialog */}
-        {isDialogOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white rounded-lg p-6 w-96 max-w-full mx-4">
-              <h3 className="text-lg font-semibold mb-4">
-                Add Note for {selectedDate?.toLocaleDateString()}
-              </h3>
-              <input
-                type="text"
-                value={noteInput}
-                onChange={(e) => setNoteInput(e.target.value)}
-                placeholder="Enter your note..."
-                className="w-full p-2 border rounded mb-4"
-              />
-              <div className="flex justify-end gap-2">
-                <button
-                  className="px-4 py-2 border rounded hover:bg-gray-100"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                  onClick={handleSubmitNote}
-                >
-                  Save Note
-                </button>
-              </div>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Calendar Section */}
+          <div className="flex justify-center">
+            <Calendar
+              onChange={handleDateChange}
+              value={selectedDate}
+              tileClassName={({ date, view }) => {
+                // Add a custom class if there's a log for that date
+                const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+                if (userLogs.some((log) => log.date === formattedDate)) {
+                  return "highlight-day"; // Highlight days with logs
+                }
+                return "";
+              }}
+            />
           </div>
-        )}
+
+          {/* Log Data Section */}
+          <div className="flex flex-col justify-center">
+            <h3 className="text-3xl font-semibold text-gray-700">Selected Day</h3>
+            <p className="text-lg text-gray-600 mb-6">{selectedDate.toDateString()}</p>
+
+            {logData ? (
+              <div className="p-6 bg-purple-100 rounded-lg">
+                <h4 className="font-semibold text-purple-700 text-xl mb-4">Log Data</h4>
+                <p>
+                  <strong>Mood:</strong> {logData.Mood}
+                </p>
+                <p>
+                  <strong>Productivity:</strong> {logData.Productivity} hours
+                </p>
+                <p>
+                  <strong>Food Items:</strong> {logData.FoodItems.join(", ")}
+                </p>
+                <p>
+                  <strong>Journal Entry:</strong> {logData.JournalEntry || "N/A"}
+                </p>
+              </div>
+            ) : (
+              <div className="p-6 bg-gray-200 rounded-lg">
+                <p className="text-gray-500">No log data for this day. Empty.</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-export default Calendar;
+export default CalendarComponent;
