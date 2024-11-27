@@ -56,7 +56,7 @@ app.post("/saveUserData", verifyToken, async (req, res) => {
       Timestamp: new Date().toISOString(),
     };
  
-    const userDoc = await userDocRef.get(userId);
+    const userDoc = await userDocRef.get();
     console.log(`User data updated successfully for ${userId}`);
     if (!userDoc.exists) {
       await userDocRef.set({
@@ -106,6 +106,39 @@ app.get("/getUserData", verifyToken, async (req, res) => {
   } catch (error) {
     console.error("Error retrieving user data:", error);
     res.status(500).send({ error: "Failed to retrieve user data." });
+  }
+});
+app.get("/checkDailyLog", verifyToken, async (req, res) => {
+  const userId = req.user.uid;
+
+  try {
+    const userDocRef = db.collection("userData").doc(userId);
+    const userDoc = await userDocRef.get();
+
+    if (!userDoc.exists) {
+      console.log("No data found for this user.");
+      return res.status(200).send({ logExists: false, data: null });
+    }
+
+
+    const userData = userDoc.data();
+    const currentDate = new Date();
+    const monthKey = `${currentDate.getFullYear()}${currentDate.getMonth() + 1}Log`;
+    const dayKey = `Day${currentDate.getDate()}`;
+
+    // Check for today's log
+    const dailyLog = userData[monthKey]?.[dayKey];
+    console.log(dailyLog)
+    if (dailyLog) {
+      console.log("Daily log found:", dailyLog);
+      return res.status(200).send({ logExists: true, data: dailyLog });
+    } else {
+      console.log("No daily log found for today.");
+      return res.status(200).send({ logExists: false, data: null });
+    }
+  } catch (error) {
+    console.error("Error checking daily log:", error);
+    res.status(500).send({ error: "Failed to check daily log." });
   }
 });
 
