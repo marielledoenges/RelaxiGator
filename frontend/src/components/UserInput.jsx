@@ -1,45 +1,53 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { auth } from '../firebase/firebase'; // Ensure this is correctly pointing to your Firebase configuration
 
 const UserInputForm = () => {
   const [mentalState, setMentalState] = useState('');
   const [productivity, setProductivity] = useState('');
   const [nutrition, setNutrition] = useState('');
-  const [isSubmitted, setIsSubmitted] = useState(false); // New state to track form submission
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [isVisible, setIsVisible] = useState(true); // New state to track visibility
+  const [isVisible, setIsVisible] = useState(true);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     const data = {
       mentalState,
       productivity,
       nutrition,
     };
-
+  
+    console.log("Data being sent to backend:", data);
+  
     try {
-      const response = await fetch('http://localhost:5000/saveUserData', {
-        method: 'POST',
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/saveUserData`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(data), // Ensure data is being stringified
       });
-
+  
       if (response.ok) {
-        setIsSubmitted(true); // Show thank-you message
-        setTimeout(() => {
-          setIsVisible(false); // Hide everything after 4 seconds
-        }, 4000); // 4000 milliseconds = 4 seconds
+        console.log("Data submitted successfully");
+        setIsSubmitted(true);
+        setTimeout(() => setIsVisible(false), 4000);
       } else {
-        setErrorMessage('Failed to submit data. Please try again.');
+        const errorResponse = await response.json();
+        console.error("Backend error response:", errorResponse);
+        setErrorMessage(errorResponse.error || "Failed to submit data.");
       }
     } catch (error) {
-      setErrorMessage('An error occurred while submitting the data.');
+      console.error("Error submitting data:", error.message);
+      setErrorMessage("An error occurred while submitting the data.");
     }
   };
+  
+  
 
-  // Render nothing if isVisible is false (hide the form and message)
   if (!isVisible) return null;
 
   return (
@@ -60,6 +68,7 @@ const UserInputForm = () => {
               onChange={(e) => setMentalState(e.target.value)}
               placeholder="Enter your mental state"
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
           </div>
 
@@ -71,6 +80,7 @@ const UserInputForm = () => {
               onChange={(e) => setProductivity(e.target.value)}
               placeholder="Enter productivity in hours"
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
           </div>
 
@@ -82,6 +92,7 @@ const UserInputForm = () => {
               onChange={(e) => setNutrition(e.target.value)}
               placeholder="Enter nutrition in calories"
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
           </div>
 

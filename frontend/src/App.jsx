@@ -1,24 +1,26 @@
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { useState } from 'react';
-import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
-import NutritionPage from './pages/NutritionPage';
-import NavBar from './components/Navbar';
-import ProtectedRoute from './components/ProtectedRoute';
-import Calendar from './components/Calendar';
-import CalendarPage from './pages/CalendarPage';
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import { useState } from "react";
+import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
+import NutritionPage from "./pages/NutritionPage";
+import NavBar from "./components/Navbar";
+import ProtectedRoute from "./components/ProtectedRoute";
+import CalendarPage from "./pages/CalendarPage";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userID, setUserID] = useState(null); // State to store userID
 
-  // Function to handle login, setting isAuthenticated to true
-  const handleLogin = () => {
+  // Function to handle login, setting isAuthenticated to true and storing userID
+  const handleLogin = (retrievedUserID) => {
     setIsAuthenticated(true);
+    setUserID(retrievedUserID); // Store the userID after successful login
   };
 
-  // Function to handle logout, setting isAuthenticated to false
+  // Function to handle logout, clearing userID and setting isAuthenticated to false
   const handleLogout = () => {
     setIsAuthenticated(false);
+    setUserID(null); // Clear the userID on logout
   };
 
   return (
@@ -34,7 +36,11 @@ function App() {
             <Route
               path="/login"
               element={
-                isAuthenticated ? <Navigate to="/home" /> : <LoginPage onLogin={handleLogin} />
+                isAuthenticated ? (
+                  <Navigate to="/home" />
+                ) : (
+                  <LoginPage onLogin={(userID) => handleLogin(userID)} /> // Pass handleLogin to retrieve userID
+                )
               }
             />
             {/* Protected Nutrition page */}
@@ -42,7 +48,7 @@ function App() {
               path="/nutrition"
               element={
                 <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <NutritionPage />
+                  <NutritionPage userID={userID} /> {/* Pass userID to NutritionPage */}
                 </ProtectedRoute>
               }
             />
@@ -51,7 +57,7 @@ function App() {
               path="/calendar"
               element={
                 <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <CalendarPage />
+                  <CalendarPage userID={userID} /> {/* Pass userID to CalendarPage */}
                 </ProtectedRoute>
               }
             />
@@ -60,14 +66,17 @@ function App() {
               path="/home"
               element={
                 isAuthenticated ? (
-                  <HomePage />
+                  <HomePage userID={userID} /> // Pass userID to HomePage
                 ) : (
                   <Navigate to="/login" />
                 )
               }
             />
             {/* Default route redirects to login */}
-            <Route path="/" element={<Navigate to={isAuthenticated ? "/home" : "/login"} />} />
+            <Route
+              path="/"
+              element={<Navigate to={isAuthenticated ? "/home" : "/login"} />}
+            />
           </Routes>
         </div>
       </div>
