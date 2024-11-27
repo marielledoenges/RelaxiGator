@@ -141,6 +141,68 @@ app.get("/checkDailyLog", verifyToken, async (req, res) => {
     res.status(500).send({ error: "Failed to check daily log." });
   }
 });
+// Add a goal to the database
+app.post("/addGoal", verifyToken, async (req, res) => {
+  const { goalText, goalDate, category, goalValue } = req.body;
+  const userId = req.user?.uid;
+
+  if (!goalText || !goalDate || !category) {
+    return res.status(400).send({ error: "All fields are required." });
+  }
+
+  try {
+    const userDocRef = db.collection("userData").doc(userId);
+    const goalId = new Date().toISOString(); // Unique ID for each goal
+
+    const goalData = {
+      goalText,
+      goalDate,
+      category, // Work or Nutrition
+      goalValue: goalValue || null, // Numeric value if provided
+      goalId,
+      timestamp: new Date().toISOString(),
+    };
+
+    await userDocRef.set(
+      {
+        goals: {
+          [goalId]: goalData,
+        },
+      },
+      { merge: true }
+    );
+
+    console.log(`Goal added successfully for user ${userId}`);
+    res.status(200).send({ message: "Goal added successfully!" });
+  } catch (error) {
+    console.error("Error adding goal:", error);
+    res.status(500).send({ error: "Failed to add goal." });
+  }
+});
+
+// Fetch all goals for a user
+app.get("/getGoals", verifyToken, async (req, res) => {
+  const userId = req.user?.uid;
+
+  try {
+    const userDocRef = db.collection("userData").doc(userId);
+    const userDoc = await userDocRef.get();
+
+    if (!userDoc.exists) {
+      return res.status(200).send({ goals: {} });
+    }
+
+    const data = userDoc.data();
+    const goals = data?.goals || {};
+    console.log("goals");
+    console.log(goals);
+    res.status(200).send({ goals });
+  } catch (error) {
+    console.error("Error fetching goals:", error);
+    res.status(500).send({ error: "Failed to fetch goals." });
+  }
+});
+
 
 // Start server
 const PORT = process.env.PORT || 5000;
