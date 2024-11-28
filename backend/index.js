@@ -141,6 +141,7 @@ app.get("/checkDailyLog", verifyToken, async (req, res) => {
     res.status(500).send({ error: "Failed to check daily log." });
   }
 });
+
 // Add a goal to the database
 app.post("/addGoal", verifyToken, async (req, res) => {
   const { goalText, goalDate, category, goalValue } = req.body;
@@ -152,21 +153,30 @@ app.post("/addGoal", verifyToken, async (req, res) => {
 
   try {
     const userDocRef = db.collection("userData").doc(userId);
-    const goalId = new Date().toISOString(); // Unique ID for each goal
+    const userDoc = await userDocRef.get();
 
     const goalData = {
       goalText,
       goalDate,
       category, // Work or Nutrition
       goalValue: goalValue || null, // Numeric value if provided
-      goalId,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString(), // Optional metadata
     };
+
+    let goalKey;
+    if (userDoc.exists) {
+      const userData = userDoc.data();
+      const goals = userData.goals || {};
+      const goalCount = Object.keys(goals).length;
+      goalKey = `goal${goalCount + 1}`; // Next sequential goal key
+    } else {
+      goalKey = "goal1"; // First goal if no goals exist
+    }
 
     await userDocRef.set(
       {
         goals: {
-          [goalId]: goalData,
+          [goalKey]: goalData,
         },
       },
       { merge: true }
@@ -179,6 +189,7 @@ app.post("/addGoal", verifyToken, async (req, res) => {
     res.status(500).send({ error: "Failed to add goal." });
   }
 });
+
 
 // Fetch all goals for a user
 app.get("/getGoals", verifyToken, async (req, res) => {
