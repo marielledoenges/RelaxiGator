@@ -18,9 +18,12 @@ const GoalsPage = () => {
     const fetchGoals = async () => {
       try {
         const token = await auth.currentUser.getIdToken();
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/getGoals`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/getGoals`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         const data = await response.json();
         setGoals(Object.values(data.goals || {}));
       } catch (error) {
@@ -46,14 +49,17 @@ const GoalsPage = () => {
 
     try {
       const token = await auth.currentUser.getIdToken();
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/addGoal`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(goalData),
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/addGoal`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(goalData),
+        }
+      );
 
       if (response.ok) {
         setGoals((prevGoals) => [...prevGoals, goalData]);
@@ -72,70 +78,87 @@ const GoalsPage = () => {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gradient-to-br from-purple-100 to-pink-100">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-lg space-y-6"
-      >
-        <h2 className="text-3xl font-bold text-gray-800 text-center">Add a Goal</h2>
-        {errorMessage && <div className="text-red-500 text-center">{errorMessage}</div>}
-        <input
-          type="text"
-          value={goalText}
-          onChange={(e) => setGoalText(e.target.value)}
-          placeholder="Enter your goal"
-          className="w-full px-4 py-2 border rounded-lg"
-          required
-        />
-        <input
-          type="date"
-          value={goalDate}
-          onChange={(e) => setGoalDate(e.target.value)}
-          className="w-full px-4 py-2 border rounded-lg"
-          required
-        />
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="w-full px-4 py-2 border rounded-lg"
-          required
-        >
-          <option value="">Select a Category</option>
-          {GOAL_CATEGORIES.map((cat) => (
-            <option key={cat.label} value={cat.label}>
-              {cat.label}
-            </option>
-          ))}
-        </select>
-        {category !== "Regular" && (
+    <div className="flex justify-center items-start min-h-screen font-mono px-8 py-12">
+      {/* Input Form */}
+      <div className="p-6 rounded-xl shadow-lg w-full max-w-md bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 mr-8">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <h2 className="text-2xl font-mono font-bold text-center text-gray-200">
+            Add a Goal
+          </h2>
+          {errorMessage && (
+            <div className="text-red-500 text-center text-sm">{errorMessage}</div>
+          )}
           <input
-            type="number"
-            value={goalValue}
-            onChange={(e) => setGoalValue(e.target.value)}
-            placeholder={`Enter ${category === "Nutrition" ? "calories" : "hours"}`}
-            className="w-full px-4 py-2 border rounded-lg"
+            type="text"
+            value={goalText}
+            onChange={(e) => setGoalText(e.target.value)}
+            placeholder="Enter your goal"
+            className="w-full px-3 py-1 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-900 text-gray-200 text-sm"
+            required
           />
-        )}
-        <button className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700">
-          Add Goal
-        </button>
-      </form>
-
-      <div className="w-full max-w-lg mt-8 space-y-4">
-        {goals.map((goal) => (
-          <div
-            key={goal.goalId}
-            className={`p-4 rounded-lg shadow-md ${GOAL_CATEGORIES.find(
-              (cat) => cat.label === goal.category
-            )?.color}`}
+          <input
+            type="date"
+            value={goalDate}
+            onChange={(e) => setGoalDate(e.target.value)}
+            className="w-full px-3 py-1 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-900 text-gray-200 text-sm"
+            required
+          />
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full px-3 py-1 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-900 text-gray-200 text-sm"
+            required
           >
-            <p>
-              <strong>{goal.goalText}</strong>
-              {goal.goalValue && ` - ${goal.goalValue}`}
-            </p>
-            <p className="text-sm text-gray-200">Due: {goal.goalDate}</p>
-          </div>
-        ))}
+            <option value="">Select a Category</option>
+            {GOAL_CATEGORIES.map((cat) => (
+              <option key={cat.label} value={cat.label}>
+                {cat.label}
+              </option>
+            ))}
+          </select>
+          {category && (
+            <input
+              type="number"
+              value={goalValue}
+              onChange={(e) => setGoalValue(e.target.value)}
+              placeholder={`Enter ${category === "Nutrition" ? "calories" : "hours"}`}
+              className="w-full px-3 py-1 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-900 text-gray-200 text-sm"
+            />
+          )}
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white font-mono py-2 rounded-lg hover:bg-blue-700 transition"
+          >
+            Add Goal
+          </button>
+        </form>
+      </div>
+
+      {/* Goals List */}
+      <div className="p-6 rounded-xl shadow-lg w-full max-w-lg bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900">
+        <h2 className="text-2xl font-mono font-bold text-center text-gray-200">
+          Your Goals
+        </h2>
+        <div className="mt-4 space-y-4">
+          {goals.length > 0 ? (
+            goals.map((goal) => (
+              <div
+                key={goal.goalId}
+                className={`p-4 rounded-lg shadow-md ${GOAL_CATEGORIES.find(
+                  (cat) => cat.label === goal.category
+                )?.color}`}
+              >
+                <p>
+                  <strong>{goal.goalText}</strong>
+                  {goal.goalValue && ` - ${goal.goalValue}`}
+                </p>
+                <p className="text-sm text-gray-200">Due: {goal.goalDate}</p>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-400 text-center">No goals added yet.</p>
+          )}
+        </div>
       </div>
     </div>
   );
