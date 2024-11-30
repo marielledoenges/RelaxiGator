@@ -57,21 +57,21 @@ const Nutrition = () => {
           <h2 className="text-xl font-bold text-gray-200 mb-4 text-center">
             {selectedFood.name}
           </h2>
-          <p>
+          <p className="text-gray-200">
             <strong>Calories:</strong>{" "}
-            {selectedFood.calories !== "N/A" ? `${selectedFood.calories}` : "N/A"}
+            <span className="text-slate-400">{selectedFood.calories !== "N/A" ? `${selectedFood.calories}` : "N/A"}</span>
           </p>
-          <p>
+          <p className="text-gray-200">
             <strong>Carbs:</strong>{" "}
-            {selectedFood.carbs !== "N/A" ? `${selectedFood.carbs}g` : "N/A"}
+            <span className="text-slate-400">{selectedFood.carbs !== "N/A" ? `${selectedFood.carbs}g` : "N/A"}</span>
           </p>
-          <p>
+          <p className="text-gray-200">
             <strong>Fat:</strong>{" "}
-            {selectedFood.fat !== "N/A" ? `${selectedFood.fat}g` : "N/A"}
+            <span className="text-slate-400">{selectedFood.fat !== "N/A" ? `${selectedFood.fat}g` : "N/A"}</span>
           </p>
-          <p>
+          <p className="text-gray-200">
             <strong>Protein:</strong>{" "}
-            {selectedFood.protein !== "N/A" ? `${selectedFood.protein}g` : "N/A"}
+            <span className="text-slate-400">{selectedFood.protein !== "N/A" ? `${selectedFood.protein}g` : "N/A"}</span>
           </p>
           <button
             onClick={handleAddToDailyLog}

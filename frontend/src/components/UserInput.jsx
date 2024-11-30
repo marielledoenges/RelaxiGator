@@ -117,23 +117,23 @@ const UserInputForm = () => {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="p-6 rounded-xl shadow-lg w-full max-w-sm text-center bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 mt-[-2rem]">
-          <h2 className="text-2xl font-mono font-bold text-purple-700 mb-4">
+          <h2 className="text-2xl font-mono font-bold text-gray-200 mb-4">
             Today's Wellness Log
           </h2>
 
           <div className="font-mono text-left text-slate-400 space-y-2">
             <p>
-              <span className="font-semibold text-purple-600">Mood:</span>{" "}
+              <span className="font-semibold text-gray-200">Mood:</span>{" "}
               {existingLog.Mood || "N/A"}
             </p>
             <p>
-              <span className="font-semibold text-purple-600">
+              <span className="font-semibold text-gray-200">
                 Productivity:
               </span>{" "}
               {existingLog.Productivity || "N/A"} hours
             </p>
             <p>
-              <span className="font-semibold text-purple-600">
+              <span className="font-semibold text-gray-200">
                 Journal Entry:
               </span>{" "}
               {existingLog.JournalEntry || "N/A"}
@@ -141,7 +141,7 @@ const UserInputForm = () => {
           </div>
 
           <button
-            className="mt-4 px-4 py-2 bg-purple-600 text-white font-mono rounded-full shadow-md hover:bg-purple-700 transition"
+            className="mt-4 px-4 py-2 bg-blue-600 text-white font-mono rounded-full shadow-md hover:bg-blue-700 transition"
             onClick={handleEdit}
           >
             Edit Log
