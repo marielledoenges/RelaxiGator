@@ -36,6 +36,7 @@ app.post("/saveUserData", verifyToken, async (req, res) => {
   const { Mood, Productivity, JournalEntry, FoodItems, Submitted, SubmissionDate } = req.body;
   const userId = req.user?.uid;
 
+  // Validate required fields
   if (!Mood || !Productivity) {
     console.error("Validation Error: Mood and Productivity are required.");
     return res.status(400).send({ error: "Mental state and productivity are required." });
@@ -43,20 +44,21 @@ app.post("/saveUserData", verifyToken, async (req, res) => {
 
   try {
     const userDocRef = db.collection("userData").doc(userId);
-    const submissionDate = new Date(SubmissionDate);
+    const submissionDate = new Date(SubmissionDate || new Date());
     const monthKey = `${submissionDate.getFullYear()}${submissionDate.getMonth() + 1}Log`;
     const dayKey = `Day${submissionDate.getDate()}`;
 
     const userDoc = await userDocRef.get();
     const existingData = userDoc.exists ? userDoc.data()[monthKey]?.[dayKey] : {};
 
-    const dailyLogData = {
+    // Prepare data for update
+    const updatedData = {
       Mood,
       Productivity,
       JournalEntry: JournalEntry || existingData?.JournalEntry || "",
-      FoodItems: existingData?.FoodItems || [], // Retain existing food items
-      Submitted,
-      SubmissionDate,
+      FoodItems: existingData?.FoodItems || [], // Retain existing FoodItems
+      Submitted: Submitted || false,
+      SubmissionDate: SubmissionDate || new Date().toISOString(),
       Timestamp: new Date().toISOString(),
     };
 
@@ -65,13 +67,13 @@ app.post("/saveUserData", verifyToken, async (req, res) => {
       await userDocRef.set({
         createdAt: new Date().toISOString(),
         [monthKey]: {
-          [dayKey]: dailyLogData,
+          [dayKey]: updatedData,
         },
       });
     } else {
       console.log(`Updating existing document for user: ${userId}`);
       await userDocRef.update({
-        [`${monthKey}.${dayKey}`]: dailyLogData,
+        [`${monthKey}.${dayKey}`]: updatedData,
       });
     }
 
@@ -83,47 +85,50 @@ app.post("/saveUserData", verifyToken, async (req, res) => {
   }
 });
 
-
 // Add food to daily log
 app.post("/addFoodToDailyLog", verifyToken, async (req, res) => {
   const { Food, Calories = "N/A", Protein = "N/A" } = req.body;
   const userId = req.user?.uid;
 
   if (!Food) {
+    console.error("Validation Error: Food name is required.");
     return res.status(400).send({ error: "Food name is required." });
   }
+
+  const sanitizedFoodEntry = {
+    Food,
+    Calories: isNaN(Number(Calories)) ? "N/A" : Number(Calories),
+    Protein: isNaN(Number(Protein)) ? "N/A" : Number(Protein),
+  };
 
   try {
     const userDocRef = db.collection("userData").doc(userId);
     const currentDate = new Date();
     const monthKey = `${currentDate.getFullYear()}${currentDate.getMonth() + 1}Log`;
     const dayKey = `Day${currentDate.getDate()}`;
-    const foodEntry = { Food, Calories, Protein };
 
     const userDoc = await userDocRef.get();
     if (!userDoc.exists) {
-      // Initialize the daily log if it doesn't exist
       await userDocRef.set({
         [monthKey]: {
           [dayKey]: {
-            FoodItems: [foodEntry],
+            FoodItems: [sanitizedFoodEntry],
           },
         },
       });
     } else {
-      // Update the FoodItems array
       await userDocRef.update({
-        [`${monthKey}.${dayKey}.FoodItems`]: admin.firestore.FieldValue.arrayUnion(foodEntry),
+        [`${monthKey}.${dayKey}.FoodItems`]: admin.firestore.FieldValue.arrayUnion(sanitizedFoodEntry),
       });
     }
 
+    console.log(`Food item added to daily log for user: ${userId}`);
     res.status(200).send({ message: "Food item added to daily log!" });
   } catch (error) {
     console.error("Error adding food to daily log:", error);
     res.status(500).send({ error: "Failed to add food to daily log." });
   }
 });
-
 
 // Get user data
 app.get("/getUserData", verifyToken, async (req, res) => {

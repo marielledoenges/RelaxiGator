@@ -116,7 +116,7 @@ const UserInputForm = () => {
   if (!isEditing && existingLog && !isSubmitted) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="p-6 rounded-xl shadow-lg w-full max-w-sm text-center bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900">
+        <div className="p-6 rounded-xl shadow-lg w-full max-w-sm text-center bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 mt-[-2rem]">
           <h2 className="text-2xl font-mono font-bold text-purple-700 mb-4">
             Today's Wellness Log
           </h2>
@@ -154,7 +154,7 @@ const UserInputForm = () => {
   return (
     <div className="flex justify-center items-center min-h-screen">
       {!isSubmitted ? (
-        <div className="p-6 rounded-xl shadow-lg w-full max-w-sm bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900">
+        <div className="p-6 rounded-xl shadow-lg w-full max-w-sm bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 mt-[-2rem]">
           <form onSubmit={handleSubmit} className="space-y-4">
             <h2 className="text-2xl font-mono font-bold text-center text-gray-200">
               {isEditing ? "Edit Your Wellness Log" : "Daily Wellness Log"}
