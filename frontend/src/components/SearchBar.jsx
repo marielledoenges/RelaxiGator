@@ -1,60 +1,97 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
+import { auth } from "../firebase/firebase";
 
-const SearchBar = () => {
-  const [query, setQuery] = useState('');
+const SearchBar = ({ setSelectedFood }) => {
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
-  const [selectedFood, setSelectedFood] =  useState({
-    name: "search a food!",
-    calories: "-",
-    carbs: "-",
-    fat: "-",
-    protein: "-"
-  });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
 
   const apiKey = process.env.REACT_APP_SPOONACULAR_API_KEY;
 
   const fetchResults = async (searchQuery) => {
-    if (searchQuery) {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(`https://api.spoonacular.com/food/ingredients/autocomplete?query=${searchQuery}&number=5&apiKey=${apiKey}`);
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        
-        const data = await response.json();
-        setResults(data);
-        //console.log(data[0].name);
-      } catch (err) {
-        setError('Error fetching results');
-      } finally {
-        setIsLoading(false);
-      }
-    } else {
-      setResults([]);
+    if (!searchQuery) return;
+    setIsLoading(true);
+    setError("");
+    try {
+      const response = await fetch(
+        `https://api.spoonacular.com/food/ingredients/autocomplete?query=${searchQuery}&number=5&apiKey=${apiKey}`
+      );
+      const data = await response.json();
+      setResults(data);
+    } catch (err) {
+      setError("Failed to fetch search results.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const fetchFoodMacros = async (id) => {
+  const fetchFoodDetails = async (food) => {
     setIsLoading(true);
-    setError(null);
+    setError("");
     try {
-      const response_one = await fetch(`https://api.spoonacular.com/food/ingredients/search?query=${id.name}&apiKey=${apiKey}`);
-      var temp = await response_one.json()
-      console.log(temp);
-      console.log(temp.results[0].id);
-      const response = await fetch(`https://api.spoonacular.com/recipes/${temp.results[0].id}/nutritionWidget.json?apiKey=${apiKey}`);
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
+      const searchResponse = await fetch(
+        `https://api.spoonacular.com/food/ingredients/search?query=${food.name}&apiKey=${apiKey}`
+      );
+      const searchData = await searchResponse.json();
+      const foodId = searchData.results[0]?.id;
+
+      if (!foodId) {
+        throw new Error("Food ID not found.");
       }
-      const data = await response.json();
-      data.name = id.name;
-      setSelectedFood(data);
+
+      const nutritionResponse = await fetch(
+        `https://api.spoonacular.com/recipes/${foodId}/nutritionWidget.json?apiKey=${apiKey}`
+      );
+      const nutritionData = await nutritionResponse.json();
+
+      const cleanUnits = (value) =>
+        value?.replace(/[^\d]/g, "") || "N/A"; // Clean units and fallback to "N/A"
+
+      const foodDetails = {
+        name: food.name,
+        calories: cleanUnits(nutritionData.calories),
+        carbs: cleanUnits(nutritionData.carbs),
+        fat: cleanUnits(nutritionData.fat),
+        protein: cleanUnits(nutritionData.protein),
+        addToDailyLog: async () => {
+          try {
+            const token = await auth.currentUser.getIdToken();
+            const currentDate = new Date();
+            const submissionDate = `${currentDate.getMonth() + 1}/${currentDate.getDate()}/${currentDate.getFullYear()}`;
+
+            const response = await fetch(
+              `${process.env.REACT_APP_BACKEND_URL}/addFoodToDailyLog`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                  foodItem: {
+                    Food: foodDetails.name,
+                    Calories: foodDetails.calories,
+                    Protein: foodDetails.protein,
+                  },
+                  submission_date: submissionDate,
+                }),
+              }
+            );
+
+            if (!response.ok) {
+              throw new Error("Failed to add food to daily log.");
+            }
+            alert(`${foodDetails.name} added to your daily log!`);
+          } catch (err) {
+            alert("Error adding food to daily log.");
+          }
+        },
+      };
+
+      setSelectedFood(foodDetails);
     } catch (err) {
-      setError('Error fetching food data');
+      setError("Failed to fetch food details.");
     } finally {
       setIsLoading(false);
     }
@@ -64,61 +101,32 @@ const SearchBar = () => {
     const debounceFetch = setTimeout(() => {
       fetchResults(query);
     }, 300);
-
     return () => clearTimeout(debounceFetch);
   }, [query]);
 
   return (
-    
-    <div className=" max-w-screen mx-auto p-6 bg-white rounded-lg shadow-lg mb-4 flex flex-col md:flex-row">
-      
-  {/* Search Bar */}
-  <div className="flex-1 mr-4">
-    <input
-      type="text"
-      placeholder="Search for food..."
-      value={query}
-      onChange={(e) => setQuery(e.target.value)}
-      className="w-full p-6 border border-gray-300 rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-    />
-    {isLoading && <p className="text-lg text-gray-600">Loading...</p>}
-    {error && <p className="text-lg text-red-600">{error}</p>}
-    <ul className="mt-4 space-y-2">
-      {results.map((item) => (
-        <li
-          key={item.id}
-          onClick={() => fetchFoodMacros(item)}
-          className="p-4 border border-gray-200 rounded-lg hover:bg-blue-100 cursor-pointer transition duration-200 text-lg"
-        >
-          {item.name}
-        </li>
-      ))}
-    </ul>
-  </div>
-
-  {/* Selected Food Information */}
-  <div className="flex-none w-1/2">
-    {selectedFood && (
-      <div className="p-6 bg-white rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">{selectedFood.name}</h2>
-        <div className="space-y-2">
-          <p className="text-lg text-gray-600">
-            <span className="font-semibold">Calories:</span> {selectedFood.calories}
-          </p>
-          <p className="text-lg text-gray-600">
-            <span className="font-semibold">Carbs:</span> {selectedFood.carbs}
-          </p>
-          <p className="text-lg text-gray-600">
-            <span className="font-semibold">Fat:</span> {selectedFood.fat}
-          </p>
-          <p className="text-lg text-gray-600">
-            <span className="font-semibold">Protein:</span> {selectedFood.protein}
-          </p>
-        </div>
-      </div>
-    )}
-  </div>
-</div>
+    <div>
+      <input
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search for food..."
+        className="w-full px-3 py-2 mb-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      {isLoading && <p className="text-gray-500">Loading...</p>}
+      {error && <p className="text-red-500">{error}</p>}
+      <ul className="space-y-2">
+        {results.map((item) => (
+          <li
+            key={item.id}
+            onClick={() => fetchFoodDetails(item)}
+            className="cursor-pointer p-2 bg-gray-700 text-gray-200 rounded hover:bg-gray-600 transition"
+          >
+            {item.name}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 };
 
