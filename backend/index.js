@@ -33,10 +33,9 @@ const verifyToken = async (req, res, next) => {
 
 // Save or update user data
 app.post("/saveUserData", verifyToken, async (req, res) => {
-  const { Mood, Productivity, JournalEntry, FoodItems, Submitted, SubmissionDate } = req.body;
+  const { Mood, Productivity, JournalEntry, Submitted, SubmissionDate } = req.body;
   const userId = req.user?.uid;
 
-  // Validate required fields
   if (!Mood || !Productivity) {
     console.error("Validation Error: Mood and Productivity are required.");
     return res.status(400).send({ error: "Mental state and productivity are required." });
@@ -51,12 +50,11 @@ app.post("/saveUserData", verifyToken, async (req, res) => {
     const userDoc = await userDocRef.get();
     const existingData = userDoc.exists ? userDoc.data()[monthKey]?.[dayKey] : {};
 
-    // Prepare data for update
     const updatedData = {
       Mood,
       Productivity,
       JournalEntry: JournalEntry || existingData?.JournalEntry || "",
-      FoodItems: existingData?.FoodItems || [], // Retain existing FoodItems
+      FoodItems: existingData?.FoodItems || [],
       Submitted: Submitted || false,
       SubmissionDate: SubmissionDate || new Date().toISOString(),
       Timestamp: new Date().toISOString(),
@@ -146,7 +144,7 @@ app.get("/getUserData", verifyToken, async (req, res) => {
         MonthlyLog: {},
       };
 
-      await userDocRef.set(newUserData); // Initialize the document
+      await userDocRef.set(newUserData);
       return res.status(200).send(newUserData);
     }
 
@@ -178,6 +176,7 @@ app.get("/getGoals", verifyToken, async (req, res) => {
   }
 });
 
+// Check if the user has a daily log
 app.get("/checkDailyLog", verifyToken, async (req, res) => {
   const userId = req.user.uid;
 
