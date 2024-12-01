@@ -84,18 +84,18 @@ app.post("/saveUserData", verifyToken, async (req, res) => {
 });
 
 // Add food to daily log
+// Add food to daily log
 app.post("/addFoodToDailyLog", verifyToken, async (req, res) => {
-  const { Food, Calories = "N/A", Protein = "N/A" } = req.body;
+  const { Food, Calories = 0, Protein = "N/A" } = req.body;
   const userId = req.user?.uid;
 
   if (!Food) {
-    console.error("Validation Error: Food name is required.");
     return res.status(400).send({ error: "Food name is required." });
   }
 
   const sanitizedFoodEntry = {
     Food,
-    Calories: isNaN(Number(Calories)) ? "N/A" : Number(Calories),
+    Calories: isNaN(Number(Calories)) ? 0 : Number(Calories),
     Protein: isNaN(Number(Protein)) ? "N/A" : Number(Protein),
   };
 
@@ -106,27 +106,82 @@ app.post("/addFoodToDailyLog", verifyToken, async (req, res) => {
     const dayKey = `Day${currentDate.getDate()}`;
 
     const userDoc = await userDocRef.get();
-    if (!userDoc.exists) {
-      await userDocRef.set({
+    const existingData = userDoc.exists ? userDoc.data() : {};
+    const monthData = existingData[monthKey] || {};
+    const dayData = monthData[dayKey] || {};
+
+    // Update FoodItems for the day
+    const updatedFoodItems = dayData.FoodItems
+      ? [...dayData.FoodItems, sanitizedFoodEntry]
+      : [sanitizedFoodEntry];
+
+    // Calculate totalDailyCals for the day
+    const totalDailyCals = updatedFoodItems.reduce(
+      (sum, item) => sum + (isNaN(Number(item.Calories)) ? 0 : Number(item.Calories)),
+      0
+    );
+
+    // Calculate totalMonthlyCals by summing all totalDailyCals for the month
+    const totalMonthlyCals = Object.entries(monthData).reduce((sum, [key, value]) => {
+      if (key.startsWith("Day") && value?.totalDailyCals) {
+        return sum + value.totalDailyCals;
+      }
+      return sum;
+    }, totalDailyCals);
+
+    // Update Firestore
+    await userDocRef.set(
+      {
         [monthKey]: {
+          ...monthData,
+          totalMonthlyCals, // Update total monthly calories
           [dayKey]: {
-            FoodItems: [sanitizedFoodEntry],
+            ...dayData,
+            FoodItems: updatedFoodItems,
+            totalDailyCals, // Update total daily calories
           },
         },
-      });
-    } else {
-      await userDocRef.update({
-        [`${monthKey}.${dayKey}.FoodItems`]: admin.firestore.FieldValue.arrayUnion(sanitizedFoodEntry),
-      });
-    }
+      },
+      { merge: true }
+    );
 
-    console.log(`Food item added to daily log for user: ${userId}`);
-    res.status(200).send({ message: "Food item added to daily log!" });
+    res.status(200).send({ message: "Food item added and totals updated." });
   } catch (error) {
     console.error("Error adding food to daily log:", error);
     res.status(500).send({ error: "Failed to add food to daily log." });
   }
 });
+
+// Check if the user has a daily log (updated to include totalDailyCals)
+app.get("/checkDailyLog", verifyToken, async (req, res) => {
+  const userId = req.user.uid;
+
+  try {
+    const userDocRef = db.collection("userData").doc(userId);
+    const userDoc = await userDocRef.get();
+
+    if (!userDoc.exists) {
+      console.log("No data found for this user.");
+      return res.status(200).send({ logExists: false, data: null });
+    }
+
+    const currentDate = new Date();
+    const monthKey = `${currentDate.getFullYear()}${currentDate.getMonth() + 1}Log`;
+    const dayKey = `Day${currentDate.getDate()}`;
+
+    const userData = userDoc.data();
+    const dailyLog = userData[monthKey]?.[dayKey];
+    if (dailyLog) {
+      return res.status(200).send({ logExists: true, data: dailyLog });
+    }
+
+    res.status(200).send({ logExists: false, data: null });
+  } catch (error) {
+    console.error("Error checking daily log:", error);
+    res.status(500).send({ error: "Failed to check daily log." });
+  }
+});
+
 
 // Get user data
 app.get("/getUserData", verifyToken, async (req, res) => {
