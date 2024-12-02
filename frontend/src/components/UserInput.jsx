@@ -12,7 +12,6 @@ const MOODS = [
 const UserInputForm = () => {
   const [selectedMood, setSelectedMood] = useState("");
   const [productivity, setProductivity] = useState("");
-  const [foodItems, setFoodItems] = useState("");
   const [journalEntry, setJournalEntry] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -37,6 +36,9 @@ const UserInputForm = () => {
           const { logExists, data } = await response.json();
           if (logExists) {
             setExistingLog(data);
+            setSelectedMood(data.Mood || "");
+            setProductivity(data.Productivity || "");
+            setJournalEntry(data.JournalEntry || "");
           }
         } else {
           setErrorMessage("Failed to check daily log.");
@@ -52,18 +54,24 @@ const UserInputForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
+    if (!selectedMood || !productivity) {
+      setErrorMessage("Mental state and productivity are required.");
+      return;
+    }
+  
     const currentDate = new Date();
     const data = {
-      mentalState: selectedMood,
-      productivity,
-      food_items: foodItems,
-      submitted: true,
-      submission_date: `${
+      Mood: selectedMood,
+      Productivity: productivity,
+      JournalEntry: journalEntry || "",
+      FoodItems: existingLog?.FoodItems || [], // Retain existing food items
+      Submitted: true,
+      SubmissionDate: `${
         currentDate.getMonth() + 1
       }/${currentDate.getDate()}/${currentDate.getFullYear()}`,
     };
-
+  
     try {
       const token = await auth.currentUser.getIdToken();
       const response = await fetch(
@@ -77,59 +85,55 @@ const UserInputForm = () => {
           body: JSON.stringify(data),
         }
       );
-
+  
       if (response.ok) {
-        setExistingLog(data); // Update the log with the saved data
+        setExistingLog(data); // Update local state
         setIsSubmitted(true);
-        setIsEditing(false); // Exit editing mode
+        setIsEditing(false);
         setTimeout(() => {
-          setIsSubmitted(false); // Clear success message
-        }, 2000); // Show success message for 2 seconds
+          setIsSubmitted(false);
+        }, 2000);
       } else {
         const errorResponse = await response.json();
         setErrorMessage(errorResponse.error || "Failed to submit data.");
       }
     } catch (error) {
+      console.error("Error submitting daily log:", error);
       setErrorMessage("An error occurred while submitting the data.");
     }
   };
+   
 
   const handleEdit = () => {
     setSelectedMood(existingLog?.Mood || "");
     setProductivity(existingLog?.Productivity || "");
-    setFoodItems(existingLog?.FoodItems?.join(", ") || "");
     setJournalEntry(existingLog?.JournalEntry || "");
     setIsEditing(true);
     setIsSubmitted(false);
   };
+  
 
   if (!isEditing && existingLog && !isSubmitted) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="p-6 rounded-xl shadow-lg w-full max-w-sm text-center bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900">
-          <h2 className="text-2xl font-mono font-bold text-purple-700 mb-4">
+        <div className="p-6 rounded-xl shadow-lg w-full max-w-sm text-center bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 mt-[-2rem]">
+          <h2 className="text-2xl font-mono font-bold text-gray-200 mb-4">
             Today's Wellness Log
           </h2>
 
           <div className="font-mono text-left text-slate-400 space-y-2">
             <p>
-              <span className="font-semibold text-purple-600">Mood:</span>{" "}
+              <span className="font-semibold text-gray-200">Mood:</span>{" "}
               {existingLog.Mood || "N/A"}
             </p>
             <p>
-              <span className="font-semibold text-purple-600">
+              <span className="font-semibold text-gray-200">
                 Productivity:
               </span>{" "}
               {existingLog.Productivity || "N/A"} hours
             </p>
             <p>
-              <span className="font-semibold text-purple-600">Food Items:</span>{" "}
-              {Array.isArray(existingLog.FoodItems)
-                ? existingLog.FoodItems.join(", ")
-                : "N/A"}
-            </p>
-            <p>
-              <span className="font-semibold text-purple-600">
+              <span className="font-semibold text-gray-200">
                 Journal Entry:
               </span>{" "}
               {existingLog.JournalEntry || "N/A"}
@@ -137,7 +141,7 @@ const UserInputForm = () => {
           </div>
 
           <button
-            className="mt-4 px-4 py-2 bg-purple-600 text-white font-mono rounded-full shadow-md hover:bg-purple-700 transition"
+            className="mt-4 px-4 py-2 bg-blue-600 text-white font-mono rounded-full shadow-md hover:bg-blue-700 transition"
             onClick={handleEdit}
           >
             Edit Log
@@ -150,7 +154,7 @@ const UserInputForm = () => {
   return (
     <div className="flex justify-center items-center min-h-screen">
       {!isSubmitted ? (
-        <div className="p-6 rounded-xl shadow-lg w-full max-w-sm bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900">
+        <div className="p-6 rounded-xl shadow-lg w-full max-w-sm bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 mt-[-2rem]">
           <form onSubmit={handleSubmit} className="space-y-4">
             <h2 className="text-2xl font-mono font-bold text-center text-gray-200">
               {isEditing ? "Edit Your Wellness Log" : "Daily Wellness Log"}
@@ -193,20 +197,6 @@ const UserInputForm = () => {
                 value={productivity}
                 onChange={(e) => setProductivity(e.target.value)}
                 placeholder="Enter productive hours"
-                className="w-full px-3 py-1 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-900 text-gray-200 text-sm"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-400 font-mono font-semibold mb-2">
-                Food Items:
-              </label>
-              <input
-                type="text"
-                value={foodItems}
-                onChange={(e) => setFoodItems(e.target.value)}
-                placeholder="Enter food items (comma-separated)"
                 className="w-full px-3 py-1 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-900 text-gray-200 text-sm"
                 required
               />

@@ -87,7 +87,10 @@ const CalendarComponent = () => {
                   <strong>Productivity:</strong> {logData.Productivity} hours
                 </p>
                 <p>
-                  <strong>Food Items:</strong> {logData.FoodItems.join(", ")}
+                <strong>Food Items:</strong>{" "}
+                {Array.isArray(logData.FoodItems)
+                ? logData.FoodItems.map((item) => `${item.Food}`).join(", ")
+                : "N/A"}
                 </p>
                 <p>
                   <strong>Journal Entry:</strong> {logData.JournalEntry || "N/A"}
