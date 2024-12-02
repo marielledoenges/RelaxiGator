@@ -205,6 +205,88 @@ app.get("/checkDailyLog", verifyToken, async (req, res) => {
     res.status(500).send({ error: "Failed to check daily log." });
   }
 });
+// Add a goal to the database
+app.post("/addGoal", verifyToken, async (req, res) => {
+  const { goalText, goalDate, category, goalValue } = req.body;
+  const userId = req.user?.uid;
+
+  if (!goalText || !goalDate || !category) {
+    return res.status(400).send({ error: "All fields are required." });
+  }
+
+  try {
+    const userDocRef = db.collection("userData").doc(userId);
+    const userDoc = await userDocRef.get();
+
+    const goalData = {
+      goalText,
+      goalDate,
+      category, // Work or Nutrition
+      goalValue: goalValue || null, // Numeric value if provided
+      timestamp: new Date().toISOString(), // Optional metadata
+    };
+
+    let goalKey;
+    if (userDoc.exists) {
+      const userData = userDoc.data();
+      const goals = userData.goals || {};
+      const goalCount = Object.keys(goals).length;
+      goalKey = `goal${goalCount + 1}`; // Next sequential goal key
+    } else {
+      goalKey = "goal1"; // First goal if no goals exist
+    }
+
+    await userDocRef.set(
+      {
+        goals: {
+          [goalKey]: goalData,
+        },
+      },
+      { merge: true }
+    );
+
+    console.log(`Goal added successfully for user ${userId}`);
+    res.status(200).send({ message: "Goal added successfully!" });
+  } catch (error) {
+    console.error("Error adding goal:", error);
+    res.status(500).send({ error: "Failed to add goal." });
+  }
+});
+// Route to fetch daily food log
+app.get("/getDailyFoodLog", verifyToken, async (req, res) => {
+  const userId = req.user.uid;
+
+  try {
+    // Reference the user's document
+    const userDocRef = db.collection("userData").doc(userId);
+    const userDoc = await userDocRef.get();
+
+    if (!userDoc.exists) {
+      console.log("No data found for this user.");
+      return res.status(200).send({ logExists: false, data: [] });
+    }
+
+    // Generate keys for the current month and day
+    const currentDate = new Date();
+    const monthKey = `${currentDate.getFullYear()}${currentDate.getMonth() + 1}Log`;
+    const dayKey = `Day${currentDate.getDate()}`;
+
+    const userData = userDoc.data();
+    const dailyLog = userData[monthKey]?.[dayKey]?.FoodItems || [];
+
+    // If no log exists for the current day, return empty data
+    if (!dailyLog.length) {
+      console.log("No food items found for today.");
+      return res.status(200).send({ logExists: false, data: [] });
+    }
+
+    // Return the food items for the current day
+    res.status(200).send({ logExists: true, data: dailyLog });
+  } catch (error) {
+    console.error("Error fetching daily food log:", error);
+    res.status(500).send({ error: "Failed to fetch daily food log." });
+  }
+});
 
 // Start server
 const PORT = process.env.PORT || 5000;

@@ -4,7 +4,10 @@ import UserInputForm from "../components/UserInput"; // Assuming this is the Jou
 import {Link} from 'react-router-dom';
 import GoalsPage from "../components/Goals";
 
+
+
 const HomePage = () => {
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500"
     >
@@ -15,6 +18,7 @@ const HomePage = () => {
           </Link> */}
           {/* Calendar and Journal Components */}
           <UserInputForm /> 
+          
           {/* <Calendar /> */}
           
         </div>
