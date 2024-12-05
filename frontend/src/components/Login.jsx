@@ -7,7 +7,7 @@ import {
 import { auth, googleProvider } from "../firebase/firebase";
 import { useNavigate } from "react-router-dom";
 
-const Login = ({ onLogin }) => {
+const Login = ({ checklogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,10 +26,10 @@ const Login = ({ onLogin }) => {
   };
 
  // gets token and send backend, needed for user
-  const sendTokenToBackend = async (token) => {
+  const backendToken = async (token) => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/getUserData`,
+        `${process.env.REACT_APP_BACKEND_URL}/dbuserdata`,
         {
           method: "GET",
           headers: {
@@ -48,7 +48,7 @@ const Login = ({ onLogin }) => {
 
       const data = await response.json();
 
-      onLogin(data.userId);
+      checklogin(data.userId);
       navigate("/home");
     } catch (err) {
       setError(err.message || "Failed to authenticate. Please try again.");
@@ -80,7 +80,7 @@ const Login = ({ onLogin }) => {
       }
 
       const token = await userCredential.user.getIdToken();
-      await sendTokenToBackend(token);
+      await backendToken(token);
     } catch (err) {
      
       setError(
@@ -90,11 +90,11 @@ const Login = ({ onLogin }) => {
   };
 
   // logs the google acc
-  const handleGoogleLogin = async () => {
+  const googleAccAuthenticate = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const token = await result.user.getIdToken();
-      await sendTokenToBackend(token);
+      await backendToken(token);
     } catch (err) {
       setError(
         `Google Login Error: ${err.code || "unknown"} - ${
@@ -161,7 +161,7 @@ const Login = ({ onLogin }) => {
         <div className="mt-4 flex justify-center">
           <button
             type="button"
-            onClick={handleGoogleLogin}
+            onClick={googleAccAuthenticate}
             className="flex items-center justify-center bg-slate-600 shadow-sm rounded-lg p-2 transition ease-in duration-100 hover:bg-slate-500"
           >
             <img

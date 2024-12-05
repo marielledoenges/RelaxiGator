@@ -4,16 +4,16 @@ import "react-calendar/dist/Calendar.css";
 import { auth } from "../firebase/firebase";
 
 const CalendarComponent = () => {
-  const [userLogs, setUserLogs] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [logData, setLogData] = useState(null);
+  const [dblogs, setdblogs] = useState([]);
+  const [inputdatevar, setinputdatevar] = useState(new Date());
+  const [calendarloghook, setcalendarloghook] = useState(null);
 
   useEffect(() => {
     const fetchLogs = async () => {
       try {
         const token = await auth.currentUser.getIdToken();
         const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/getUserData`,
+          `${process.env.REACT_APP_BACKEND_URL}/dbuserdata`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -23,29 +23,25 @@ const CalendarComponent = () => {
 
         if (response.ok) {
           const data = await response.json();
-          setUserLogs(data);
+          setdblogs(data);
         } else {
-          console.error("Failed to fetch user logs.");
+          console.error("Error logged, check firebase DB if entry exists");
         }
       } catch (error) {
-        console.error("Error fetching user logs:", error);
+        console.error("Error logged, check firebase DB if entry exists", error);
       }
     };
 
     fetchLogs();
   }, []);
 
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
-    const formattedDate = `${
-      date.getMonth() + 1
-    }/${date.getDate()}/${date.getFullYear()}`;
-
+  const datehook = (date) => {
+    setinputdatevar(date);
     const monthKey = `${date.getFullYear()}${date.getMonth() + 1}Log`;
     const dayKey = `Day${date.getDate()}`;
 
-    const log = userLogs[monthKey]?.[dayKey] || null;
-    setLogData(log);
+    const log = dblogs[monthKey]?.[dayKey] || null;
+    setcalendarloghook(log);
   };
 
   return (
@@ -57,15 +53,15 @@ const CalendarComponent = () => {
         </h2>
         <div className="flex justify-center">
           <Calendar
-            onChange={handleDateChange}
-            value={selectedDate}
+            onChange={datehook}
+            value={inputdatevar}
             tileClassName={({ date }) => {
-              const formattedDate = `${
+              const dbdate = `${
                 date.getMonth() + 1
               }/${date.getDate()}/${date.getFullYear()}`;
               const monthKey = `${date.getFullYear()}${date.getMonth() + 1}Log`;
               const dayKey = `Day${date.getDate()}`;
-              return userLogs[monthKey]?.[dayKey]
+              return dblogs[monthKey]?.[dayKey]
                 ? "highlight-day bg-blue-600 text-white rounded-md"
                 : "";
             }}
@@ -80,26 +76,26 @@ const CalendarComponent = () => {
           Selected Day
         </h2>
         <p className="text-xs text-slate-400 text-center mb-3">
-          {selectedDate.toDateString()}
+          {inputdatevar.toDateString()}
         </p>
 
-        {logData ? (
+        {calendarloghook ? (
           <div className="p-3 bg-gradient-to-br from-purple-600 via-pink-600 to-orange-600 rounded-lg shadow-md">
             <p className="text-slate-100 text-xs">
-              <strong className="text-slate-200">Mood:</strong> {logData.Mood}
+              <strong className="text-slate-200">Mood:</strong> {calendarloghook.Mood}
             </p>
             <p className="text-slate-100 text-xs">
               <strong className="text-slate-200">Productivity:</strong>{" "}
-              {logData.Productivity}{" "}
-              {logData.Productivity === 1 ? "hour" : "hours"}
+              {calendarloghook.Productivity}{" "}
+              {calendarloghook.Productivity === 1 ? "hour" : "hours"}
             </p>
             <p className="text-slate-100 text-xs">
               <strong className="text-slate-200">Total Calories:</strong>{" "}
-              {logData.totalDailyCals || 0} cals
+              {calendarloghook.totalDailyCals || 0} cals
             </p>
             <p className="text-slate-100 text-xs">
               <strong className="text-slate-200">Journal Entry:</strong>{" "}
-              {logData.JournalEntry || "N/A"}
+              {calendarloghook.JournalEntry || "N/A"}
             </p>
           </div>
         ) : (

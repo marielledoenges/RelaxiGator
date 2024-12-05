@@ -13,13 +13,13 @@ function App() {
     const [userID, setUserID] = useState(null); 
     // this is where the user Id token is passed to backend
    
-    const handleLogin = (retrievedUserID) => {
+    const loginhook = (retrievedUserID) => {
         authHook(true);
         setUserID(retrievedUserID);
     };
 
     // to remove cookies
-    const handleLogout = () => {
+    const logouthook = () => {
         authHook(false);
         setUserID(null); 
     };
@@ -28,18 +28,15 @@ function App() {
         <Router>
             <div className="flex">
              
-                {authVar && <NavBar onLogout={handleLogout} />}
+                {authVar && <NavBar onLogout={logouthook} />}
 
                 <div className="flex-grow">
                     <Routes>
                        
                         <Route
                             path="/login"
-                            element={
-                                authVar ? (
-                                    <Navigate to="/home" />
-                                ) : (
-                                    <LoginPage onLogin={(userID) => handleLogin(userID)} />
+                            element={authVar ? ( <Navigate to="/home" />) : (
+                                    <LoginPage checklogin={(userID) => loginhook(userID)} />
                                 )
                             }
                         />
@@ -74,9 +71,7 @@ function App() {
                         <Route
                             path="/home"
                             element={
-                                authVar ? (
-                                    <HomePage userID={userID} /> 
-                                ) : (
+                                authVar ? (<HomePage userID={userID} />) : (
                                     <Navigate to="/login" />
                                 )
                             }

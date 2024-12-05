@@ -9,7 +9,7 @@ const MOODS = [
   { emoji: "😠", label: "Angry" },
 ];
 
-const UserInputForm = () => {
+const Userlogform = () => {
   const [selectedMood, setSelectedMood] = useState("");
   const [productivity, setProductivity] = useState("");
   const [journalEntry, setJournalEntry] = useState("");
@@ -18,12 +18,13 @@ const UserInputForm = () => {
   const [existingLog, setExistingLog] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
+  // bearer tokens needed for auth, reference: https://www.csvgetter.com/blog/authorization-bearer-token-example
   useEffect(() => {
-    const checkDailyLog = async () => {
+    const dbchecklog = async () => {
       try {
         const token = await auth.currentUser.getIdToken();
         const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/checkDailyLog`,
+          `${process.env.REACT_APP_BACKEND_URL}/dbchecklog`,
           {
             method: "GET",
             headers: {
@@ -48,7 +49,7 @@ const UserInputForm = () => {
       }
     };
 
-    checkDailyLog();
+    dbchecklog();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -251,4 +252,4 @@ const UserInputForm = () => {
   );
 };
 
-export default UserInputForm;
+export default Userlogform;

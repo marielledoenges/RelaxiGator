@@ -15,7 +15,7 @@ const Nutrition = () => {
     try {
       const token = await auth.currentUser.getIdToken();
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/addFoodToDailyLog`,
+        `${process.env.REACT_APP_BACKEND_URL}/dbaddfood`,
         {
           method: "POST",
           headers: {

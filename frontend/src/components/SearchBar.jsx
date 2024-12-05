@@ -2,32 +2,32 @@ import React, { useState, useEffect } from "react";
 import { auth } from "../firebase/firebase";
 
 const SearchBar = ({ setSelectedFood }) => {
-  const [query, setQuery] = useState("");
+  const [dbquery, setdbquery] = useState("");
   const [results, setResults] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadbar, setloadbar] = useState(false);
   const [error, setError] = useState("");
 
   const apiKey = process.env.REACT_APP_SPOONACULAR_API_KEY;
 
-  const fetchResults = async (searchQuery) => {
-    if (!searchQuery) return;
-    setIsLoading(true);
+  const fetchResults = async (spoonacularsearchq) => {
+    if (!spoonacularsearchq) return;
+    setloadbar(true);
     setError("");
     try {
       const response = await fetch(
-        `https://api.spoonacular.com/food/ingredients/autocomplete?query=${searchQuery}&number=5&apiKey=${apiKey}`
+        `https://api.spoonacular.com/food/ingredients/autocomplete?query=${spoonacularsearchq}&number=5&apiKey=${apiKey}`
       );
       const data = await response.json();
       setResults(data);
     } catch (err) {
       setError("Failed to fetch search results.");
     } finally {
-      setIsLoading(false);
+      setloadbar(false);
     }
   };
 
   const fetchFoodDetails = async (food) => {
-    setIsLoading(true);
+    setloadbar(true);
     setError("");
     try {
       const searchResponse = await fetch(
@@ -57,11 +57,11 @@ const SearchBar = ({ setSelectedFood }) => {
         addToDailyLog: async () => {
           try {
             const token = await auth.currentUser.getIdToken();
-            const currentDate = new Date();
-            const submissionDate = `${currentDate.getMonth() + 1}/${currentDate.getDate()}/${currentDate.getFullYear()}`;
+            const getcurrdate = new Date();
+            const submissionDate = `${getcurrdate.getMonth() + 1}/${getcurrdate.getDate()}/${getcurrdate.getFullYear()}`;
 
             const response = await fetch(
-              `${process.env.REACT_APP_BACKEND_URL}/addFoodToDailyLog`,
+              `${process.env.REACT_APP_BACKEND_URL}/dbaddfood`,
               {
                 method: "POST",
                 headers: {
@@ -93,27 +93,27 @@ const SearchBar = ({ setSelectedFood }) => {
     } catch (err) {
       setError("Failed to fetch food details.");
     } finally {
-      setIsLoading(false);
+      setloadbar(false);
     }
   };
 
   useEffect(() => {
     const debounceFetch = setTimeout(() => {
-      fetchResults(query);
+      fetchResults(dbquery);
     }, 300);
     return () => clearTimeout(debounceFetch);
-  }, [query]);
+  }, [dbquery]);
 
   return (
     <div>
       <input
         type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        value={dbquery}
+        onChange={(e) => setdbquery(e.target.value)}
         placeholder="Search for food..."
         className="w-full px-3 py-2 mb-4 border bg-gray-900 text-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
-      {isLoading && <p className="text-gray-500">Loading...</p>}
+      {loadbar && <p className="text-gray-500">Loading...</p>}
       {error && <p className="text-red-500">{error}</p>}
       <ul className="space-y-2">
         {results.map((item) => (

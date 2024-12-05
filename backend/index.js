@@ -2,30 +2,30 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const { admin, db } = require("./firebase");
-
 const app = express();
 app.use(cors());
 app.use(express.json());
-
 app.use((req, res, next) => {
   next();
 });
 
  // so this is supposed to get the token needed for all backedn function and gets the required info from it
-const certifyTK = async (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1];
+ // referenced from: https://dev.to/earthcomfy/build-authentication-using-firebase-react-express-28ig?comments_sort=oldest
+ // to understand mechanism for firebase auth
+const checktoken = async (req, res, next) => {
+  const userkey = req.headers.authorization?.split(" ")[1];
   try {
-    const noncryptotoken = await admin.auth().verifyIdToken(token);
-    req.user = { uid: noncryptotoken.uid, email: noncryptotoken.email };
+    const recievedtoken = await admin.auth().verifyIdToken(userkey);
+    req.user = { uid: recievedtoken.uid, email: recievedtoken.email };
     next();
   } catch (error) {
     console.error("cant verify token", error);
-    res.status(403).send({ error: "cannot login with same cookies" });
+    res.status(403).send({ error: "cant verify token" });
   }
 };
 
 // major function that saves the data to db based on current month/data and gets relevant data
-app.post("/dbdatasave", certifyTK, async (req, res) => {
+app.post("/dbdatasave", checktoken, async (req, res) => {
   const { Mood, Productivity, JournalEntry, Submitted, SubmissionDate } = req.body;
   const dbID = req.user?.uid;
 
@@ -67,12 +67,12 @@ app.post("/dbdatasave", certifyTK, async (req, res) => {
     }
     res.status(200).send({ message: "Logged Successfuly" });
   } catch (error) {
-    console.error("Can't save log", error);
-    res.status(500).send({ error: "Couldn't save log" });
+    console.error("Can't save info", error);
+    res.status(500).send({ error: "Can't save info" });
   }
 });
 
-app.post("/addFoodToDailyLog", certifyTK, async (req, res) => {
+app.post("/dbaddfood", checktoken, async (req, res) => {
   const { Food, Calories = 0, Protein = "N/A" } = req.body;
   const dbID = req.user?.uid;
 
@@ -134,12 +134,12 @@ app.post("/addFoodToDailyLog", certifyTK, async (req, res) => {
     res.status(200).send({ message: "Food items updated" });
   } catch (error) {
     console.error("Couldnt add food", error);
-    res.status(500).send({ error: "Couldn't add food to log" });
+    res.status(500).send({ error: "Couldn't add food" });
   }
 });
 
 // used to see if submitted to make sure no double render
-app.get("/checkDailyLog", certifyTK, async (req, res) => {
+app.get("/dbchecklog", checktoken, async (req, res) => {
   const dbID = req.user.uid;
 
   try {
@@ -167,7 +167,7 @@ app.get("/checkDailyLog", certifyTK, async (req, res) => {
 });
 
 // function that helps the ui see the log
-app.get("/getUserData", certifyTK, async (req, res) => {
+app.get("/dbuserdata", checktoken, async (req, res) => {
   const dbID = req.user.uid;
 
   try {
@@ -192,7 +192,7 @@ app.get("/getUserData", certifyTK, async (req, res) => {
 });
 
 // needed to display goals on UI
-app.get("/getGoals", certifyTK, async (req, res) => {
+app.get("/dbgoals", checktoken, async (req, res) => {
   const dbID = req.user?.uid;
 
   try {
@@ -207,12 +207,12 @@ app.get("/getGoals", certifyTK, async (req, res) => {
     const goals = data?.goals || {};
     res.status(200).send({ goals });
   } catch (error) {
-    res.status(500).send({ error: "Error didn't detch goals" });
+    res.status(500).send({ error: "Can't find goals" });
   }
 });
 
 // this is used to see if goals met
-app.post("/goalevaluator", certifyTK, async (req, res) => {
+app.post("/goalevaluator", checktoken, async (req, res) => {
   const dbID = req.user?.uid;
 
   try { 
@@ -252,7 +252,7 @@ app.post("/goalevaluator", certifyTK, async (req, res) => {
   }
 });
 
-app.post("/dbaddgoal", certifyTK, async (req, res) => {
+app.post("/dbaddgoal", checktoken, async (req, res) => {
   const { goalText, goalDate, category, goalValue } = req.body;
   const dbID = req.user?.uid;
 
@@ -296,7 +296,7 @@ app.post("/dbaddgoal", certifyTK, async (req, res) => {
     res.status(500).send({ error: "See logs goal failed" });
   }
 });
-app.get("/dbfoodinfo", certifyTK, async (req, res) => {
+app.get("/dbfoodinfo", checktoken, async (req, res) => {
   const dbID = req.user.uid;
 
   try {

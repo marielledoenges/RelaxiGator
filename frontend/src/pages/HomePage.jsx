@@ -1,5 +1,5 @@
 import React from "react";
-import UserInputForm from "../components/UserInput"; // Assuming this is the Journal component
+import Userlogform from "../components/Userlogform";
 import { Link } from "react-router-dom";
 
 const HomePage = () => {
@@ -10,7 +10,7 @@ const HomePage = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="p-8">
           
-          <UserInputForm />
+          <Userlogform />
         </div>
       </div>
     </div>

@@ -19,7 +19,7 @@ const GoalsPage = () => {
       try {
         const token = await auth.currentUser.getIdToken();
         const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/getGoals`,
+          `${process.env.REACT_APP_BACKEND_URL}/dbgoals`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
