@@ -14,7 +14,7 @@ const UserInputForm = () => {
   const [productivity, setProductivity] = useState("");
   const [journalEntry, setJournalEntry] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errormsg, errorhook] = useState("");
   const [existingLog, setExistingLog] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -41,10 +41,10 @@ const UserInputForm = () => {
             setJournalEntry(data.JournalEntry || "");
           }
         } else {
-          setErrorMessage("Failed to check daily log.");
+          errorhook("Failed to check daily log.");
         }
       } catch (error) {
-        setErrorMessage("An error occurred while checking the daily log.");
+        errorhook("An error occurred while checking the daily log.");
       }
     };
 
@@ -55,7 +55,7 @@ const UserInputForm = () => {
     e.preventDefault();
   
     if (!selectedMood || !productivity) {
-      setErrorMessage("Mood and productivity needed");
+      errorhook("Mood and productivity needed");
       return;
     }
   
@@ -113,10 +113,10 @@ const UserInputForm = () => {
         }, 2000);
       } else {
         const errorResponse = await response.json();
-        setErrorMessage(errorResponse.error || "Failed to submit data.");
+        errorhook(errorResponse.error || "Failed to submit data.");
       }
     } catch (error) {
-      setErrorMessage("An error occurred while submitting the data.");
+      errorhook("An error occurred while submitting the data.");
     }
   };
    
@@ -177,9 +177,9 @@ const UserInputForm = () => {
               {isEditing ? "Edit Your Wellness Log" : "Daily Wellness Log"}
             </h2>
 
-            {errorMessage && (
+            {errormsg && (
               <div className="text-red-500 text-center text-sm">
-                {errorMessage}
+                {errormsg}
               </div>
             )}
 

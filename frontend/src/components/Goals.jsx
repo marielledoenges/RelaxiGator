@@ -12,7 +12,7 @@ const GoalsPage = () => {
   const [category, setCategory] = useState("");
   const [goalValue, setGoalValue] = useState("");
   const [goals, setGoals] = useState([]);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errormsg, errorhook] = useState("");
 
   useEffect(() => {
     const fetchGoals = async () => {
@@ -36,7 +36,7 @@ const GoalsPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!goalText || !goalDate || !category) {
-      setErrorMessage("Please fill in all required fields.");
+      errorhook("Please fill in all required fields.");
       return;
     }
 
@@ -67,13 +67,13 @@ const GoalsPage = () => {
         setGoalDate("");
         setCategory("");
         setGoalValue("");
-        setErrorMessage("");
+        errorhook("");
       } else {
         const errorResponse = await response.json();
-        setErrorMessage(errorResponse.error || "Failed to add goal.");
+        errorhook(errorResponse.error || "Failed to add goal.");
       }
     } catch (error) {
-      setErrorMessage("An error occurred while adding the goal.");
+      errorhook("An error occurred while adding the goal.");
     }
   };
 
@@ -85,8 +85,8 @@ const GoalsPage = () => {
           <h2 className="text-2xl font-mono font-bold text-center text-gray-200">
             Add a Goal
           </h2>
-          {errorMessage && (
-            <div className="text-red-500 text-center text-sm">{errorMessage}</div>
+          {errormsg && (
+            <div className="text-red-500 text-center text-sm">{errormsg}</div>
           )}
           <input
             type="text"

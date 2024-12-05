@@ -5,7 +5,7 @@ import FoodUI from "./foodUI";
 const Nutrition = () => {
   const [selectedFood, setSelectedFood] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errormsg, errorhook] = useState("");
 
   const handleAddToDailyLog = async () => {
     if (!selectedFood) return;
@@ -31,13 +31,13 @@ const Nutrition = () => {
         setTimeout(() => setSuccessMessage(""), 3000); 
       } else {
         const errorResponse = await response.json();
-        setErrorMessage(errorResponse.error || "Failed to add food to daily log.");
-        setTimeout(() => setErrorMessage(""), 3000); 
+        errorhook(errorResponse.error || "Failed to add food to daily log.");
+        setTimeout(() => errorhook(""), 3000); 
       }
     } catch (error) {
       console.error("Error adding food to daily log:", error);
-      setErrorMessage("An error occurred. Please try again.");
-      setTimeout(() => setErrorMessage(""), 3000); 
+      errorhook("An error occurred. Please try again.");
+      setTimeout(() => errorhook(""), 3000); 
     }
   };
 
@@ -83,8 +83,8 @@ const Nutrition = () => {
           {successMessage && (
             <p className="mt-4 text-green-500 text-center">{successMessage}</p>
           )}
-          {errorMessage && (
-            <p className="mt-4 text-red-500 text-center">{errorMessage}</p>
+          {errormsg && (
+            <p className="mt-4 text-red-500 text-center">{errormsg}</p>
           )}
         </div>
       )}

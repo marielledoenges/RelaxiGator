@@ -4,7 +4,7 @@ import { auth } from "../firebase/firebase";
 const FoodUI = () => {
   const [foodLogs, setFoodLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errormsg, errorhook] = useState("");
 
   useEffect(() => {
     const fetchFoodLog = async () => {
@@ -25,10 +25,10 @@ const FoodUI = () => {
             setFoodLogs([]);
           }
         } else {
-          setErrorMessage("Couldn't fetch food logs");
+          errorhook("Couldn't fetch food logs");
         }
       } catch (error) {
-        setErrorMessage("err.");
+        errorhook("err.");
       } finally {
         setLoading(false); // Ensure loading is disabled after fetch
       }
@@ -44,8 +44,8 @@ const FoodUI = () => {
       </h2>
       {loading ? (
         <div className="text-center text-gray-300">Loading...</div>
-      ) : errorMessage ? (
-        <div className="text-red-500 text-center text-sm">{errorMessage}</div>
+      ) : errormsg ? (
+        <div className="text-red-500 text-center text-sm">{errormsg}</div>
       ) : foodLogs.length > 0 ? (
         <div className="space-y-4">
           {foodLogs.map((log, index) => (
