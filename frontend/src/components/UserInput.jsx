@@ -44,7 +44,6 @@ const UserInputForm = () => {
           setErrorMessage("Failed to check daily log.");
         }
       } catch (error) {
-        console.error("Error checking daily log:", error);
         setErrorMessage("An error occurred while checking the daily log.");
       }
     };
@@ -56,7 +55,7 @@ const UserInputForm = () => {
     e.preventDefault();
   
     if (!selectedMood || !productivity) {
-      setErrorMessage("Mental state and productivity are required.");
+      setErrorMessage("Mood and productivity needed");
       return;
     }
   
@@ -65,7 +64,7 @@ const UserInputForm = () => {
       Mood: selectedMood,
       Productivity: productivity,
       JournalEntry: journalEntry || "",
-      FoodItems: existingLog?.FoodItems || [], // Retain existing food items
+      FoodItems: existingLog?.FoodItems || [], 
       Submitted: true,
       SubmissionDate: `${
         currentDate.getMonth() + 1
@@ -87,7 +86,7 @@ const UserInputForm = () => {
       );
   
       if (response.ok) {
-        setExistingLog(data); // Update local state
+        setExistingLog(data); 
         setIsSubmitted(true);
         setIsEditing(false);
         const evaluateResponse = await fetch(
@@ -102,9 +101,9 @@ const UserInputForm = () => {
   
         if (evaluateResponse.ok) {
           const { updatedGoals } = await evaluateResponse.json();
-          console.log("Goals updated successfully:", updatedGoals);
+      
         } else {
-          console.error("Failed to evaluate goals.");
+      
         }
         setTimeout(() => {
           setIsSubmitted(false);
@@ -117,7 +116,6 @@ const UserInputForm = () => {
         setErrorMessage(errorResponse.error || "Failed to submit data.");
       }
     } catch (error) {
-      console.error("Error submitting daily log:", error);
       setErrorMessage("An error occurred while submitting the data.");
     }
   };
@@ -246,7 +244,7 @@ const UserInputForm = () => {
           <h2 className="text-2xl font-mono font-bold text-pink-600 mb-3">
             Log Submitted!
           </h2>
-          <p className="text-gray-300">Thank you for tracking your wellness.</p>
+          <p className="text-gray-300">Congratulations on tracking your wellness.</p>
         </div>
       )}
     </div>

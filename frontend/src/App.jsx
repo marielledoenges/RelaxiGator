@@ -10,79 +10,78 @@ import GoalsPage from "./pages/GoalsPage";
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [userID, setUserID] = useState(null); // State to store userID
-
-    // Function to handle login, setting isAuthenticated to true and storing userID
+    const [userID, setUserID] = useState(null); 
+    // this is where the user Id token is passed to backend
+   
     const handleLogin = (retrievedUserID) => {
         setIsAuthenticated(true);
-        setUserID(retrievedUserID); // Store the userID after successful login
+        setUserID(retrievedUserID);
     };
 
-    // Function to handle logout, clearing userID and setting isAuthenticated to false
+    // to remove cookies
     const handleLogout = () => {
         setIsAuthenticated(false);
-        setUserID(null); // Clear the userID on logout
+        setUserID(null); 
     };
 
     return (
         <Router>
             <div className="flex">
-                {/* Render NavBar only when authenticated */}
+             
                 {isAuthenticated && <NavBar onLogout={handleLogout} />}
 
-                {/* Main content area */}
                 <div className="flex-grow">
                     <Routes>
-                        {/* Route for login page; redirect to home if already authenticated */}
+                       
                         <Route
                             path="/login"
                             element={
                                 isAuthenticated ? (
                                     <Navigate to="/home" />
                                 ) : (
-                                    <LoginPage onLogin={(userID) => handleLogin(userID)} /> // Pass handleLogin to retrieve userID
+                                    <LoginPage onLogin={(userID) => handleLogin(userID)} />
                                 )
                             }
                         />
-                        {/* Protected Nutrition page */}
+                        
                         <Route
                             path="/nutrition"
                             element={
                                 <ProtectedRoute isAuthenticated={isAuthenticated}>
-                                    <NutritionPage userID={userID} /> {/* Pass userID to NutritionPage */}
+                                    <NutritionPage userID={userID} /> 
                                 </ProtectedRoute>
                             }
                         />
-                        {/* Protected Calendar page */}
+                      
                         <Route
                             path="/calendar"
                             element={
                                 <ProtectedRoute isAuthenticated={isAuthenticated}>
-                                    <CalendarPage userID={userID} /> {/* Pass userID to CalendarPage */}
+                                    <CalendarPage userID={userID} /> 
                                 </ProtectedRoute>
                             }
                         />
-                        {/* Protected Goals page */}
+                       
                         <Route
                             path="/goals"
                             element={
                                 <ProtectedRoute isAuthenticated={isAuthenticated}>
-                                    <GoalsPage userID={userID} /> {/* Pass userID to GoalsPage */}
+                                    <GoalsPage userID={userID} /> 
                                 </ProtectedRoute>
                             }
                         />
-                        {/* Protected Home page */}
+                    
                         <Route
                             path="/home"
                             element={
                                 isAuthenticated ? (
-                                    <HomePage userID={userID} /> // Pass userID to HomePage
+                                    <HomePage userID={userID} /> 
                                 ) : (
                                     <Navigate to="/login" />
                                 )
                             }
                         />
-                        {/* Default route redirects to login */}
+             
                         <Route
                             path="/"
                             element={<Navigate to={isAuthenticated ? "/home" : "/login"} />}

@@ -13,20 +13,19 @@ const Login = ({ onLogin }) => {
   const [error, setError] = useState("");
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
 
-  const navigate = useNavigate(); // Initialize navigation
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     setError("");
   }, [isCreatingAccount]);
 
-  // Password validation function
-  const validatePassword = (password) => {
+  const correctpassword = (password) => {
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     return passwordRegex.test(password);
   };
 
-  // Function to send token to backend
+ // gets token and send backend, needed for user
   const sendTokenToBackend = async (token) => {
     try {
       const response = await fetch(
@@ -43,17 +42,15 @@ const Login = ({ onLogin }) => {
       if (!response.ok) {
         const backendError = await response.json();
         throw new Error(
-          backendError.error || "Failed to authenticate with the backend"
+          backendError.error || "Failed"
         );
       }
 
       const data = await response.json();
-      console.log("User data from backend:", data);
 
       onLogin(data.userId);
       navigate("/home");
     } catch (err) {
-      console.error("Error sending token to backend:", err);
       setError(err.message || "Failed to authenticate. Please try again.");
     }
   };
@@ -62,7 +59,7 @@ const Login = ({ onLogin }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    if (isCreatingAccount && !validatePassword(password)) {
+    if (isCreatingAccount && !correctpassword(password)) {
       setError(
         "Password must be at least 8 characters long and contain a capital letter, lowercase letter, number, and symbol."
       );
@@ -78,34 +75,30 @@ const Login = ({ onLogin }) => {
           email,
           password
         );
-        console.log("Account created successfully:", userCredential.user);
       } else {
         userCredential = await signInWithEmailAndPassword(auth, email, password);
-        console.log("Logged in successfully:", userCredential.user);
       }
 
       const token = await userCredential.user.getIdToken();
       await sendTokenToBackend(token);
     } catch (err) {
-      console.error("Authentication error:", err.code, err.message);
+     
       setError(
-        `Error: ${err.code || "unknown"} - ${err.message || "An error occurred"}`
+        `Error: ${err.code || "unknown"} - ${err.message || "error"}`
       );
     }
   };
 
-  // Handle Google login
+  // logs the google acc
   const handleGoogleLogin = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const token = await result.user.getIdToken();
-      console.log("Logged in with Google successfully:", result.user);
       await sendTokenToBackend(token);
     } catch (err) {
-      console.error("Google login error:", err.code, err.message);
       setError(
         `Google Login Error: ${err.code || "unknown"} - ${
-          err.message || "An error occurred"
+          err.message || "error"
         }`
       );
     }

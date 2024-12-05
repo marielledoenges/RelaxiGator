@@ -3,7 +3,7 @@ import { auth } from "../firebase/firebase";
 
 const FoodUI = () => {
   const [foodLogs, setFoodLogs] = useState([]);
-  const [loading, setLoading] = useState(true); // To handle loading state
+  const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
@@ -28,7 +28,6 @@ const FoodUI = () => {
           setErrorMessage("Failed to fetch food logs. Please try again later.");
         }
       } catch (error) {
-        console.error("Error fetching daily food log:", error);
         setErrorMessage("An error occurred while fetching the food log.");
       } finally {
         setLoading(false); // Ensure loading is disabled after fetch

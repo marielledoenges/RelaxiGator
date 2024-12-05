@@ -9,14 +9,8 @@ const HomePage = () => {
     >
       <div className="container mx-auto px-4 py-8">
         <div className="p-8">
-          {/* Journal/Input Form Component */}
+          
           <UserInputForm />
-
-          {/* Add GoalTracker Component */}
-          <div className="mt-8">
-            <h2 className="text-xl font-bold text-white mb-4">Goal Progress</h2>
-            
-          </div>
         </div>
       </div>
     </div>
