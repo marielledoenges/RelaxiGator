@@ -75,7 +75,7 @@ const UserInputForm = () => {
     try {
       const token = await auth.currentUser.getIdToken();
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/saveUserData`,
+        `${process.env.REACT_APP_BACKEND_URL}/dbdatasave`,
         {
           method: "POST",
           headers: {
@@ -91,7 +91,7 @@ const UserInputForm = () => {
         setIsSubmitted(true);
         setIsEditing(false);
         const evaluateResponse = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/evaluateGoals`,
+          `${process.env.REACT_APP_BACKEND_URL}/goalevaluator`,
           {
             method: "POST",
             headers: {

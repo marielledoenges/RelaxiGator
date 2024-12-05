@@ -8,37 +8,30 @@ app.use(cors());
 app.use(express.json());
 
 app.use((req, res, next) => {
-  console.log(`Incoming Request: ${req.method} ${req.url}`);
-  console.log("Request Headers:", req.headers);
-  console.log("Request Body:", req.body);
   next();
 });
 
-// Middleware to verify Firebase token and get user ID
+ // so this is supposed to get the token needed for all backedn function and gets the required info from it
 const verifyToken = async (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
-  if (!token) {
-    return res.status(401).send({ error: "Authorization token is required." });
-  }
-
   try {
     const decodedToken = await admin.auth().verifyIdToken(token);
     req.user = { uid: decodedToken.uid, email: decodedToken.email };
     next();
   } catch (error) {
-    console.error("Token verification error:", error);
-    res.status(403).send({ error: "Unauthorized access." });
+    console.error("cant verify token", error);
+    res.status(403).send({ error: "cannot login with same cookies" });
   }
 };
 
-// Save or update user data
-app.post("/saveUserData", verifyToken, async (req, res) => {
+// major function that saves the data to db based on current month/data and gets relevant data
+app.post("/dbdatasave", verifyToken, async (req, res) => {
   const { Mood, Productivity, JournalEntry, Submitted, SubmissionDate } = req.body;
   const userId = req.user?.uid;
 
   if (!Mood || !Productivity) {
-    console.error("Validation Error: Mood and Productivity are required.");
-    return res.status(400).send({ error: "Mental state and productivity are required." });
+    console.error("Mood and Productivity needed to save log");
+    return res.status(400).send({ error: "Mood and Productivity needed to save log" });
   }
 
   try {
@@ -61,7 +54,6 @@ app.post("/saveUserData", verifyToken, async (req, res) => {
     };
 
     if (!userDoc.exists) {
-      console.log(`Creating new document for user: ${userId}`);
       await userDocRef.set({
         createdAt: new Date().toISOString(),
         [monthKey]: {
@@ -69,17 +61,14 @@ app.post("/saveUserData", verifyToken, async (req, res) => {
         },
       });
     } else {
-      console.log(`Updating existing document for user: ${userId}`);
       await userDocRef.update({
         [`${monthKey}.${dayKey}`]: updatedData,
       });
     }
-
-    console.log(`Daily log saved successfully for user: ${userId}`);
-    res.status(200).send({ message: "Daily log saved successfully!" });
+    res.status(200).send({ message: "Logged Successfuly" });
   } catch (error) {
-    console.error("Error saving daily log:", error);
-    res.status(500).send({ error: "Failed to save daily log." });
+    console.error("Can't save log", error);
+    res.status(500).send({ error: "Couldn't save log" });
   }
 });
 
@@ -88,7 +77,7 @@ app.post("/addFoodToDailyLog", verifyToken, async (req, res) => {
   const userId = req.user?.uid;
 
   if (!Food) {
-    return res.status(400).send({ error: "Food name is required." });
+    return res.status(400).send({ error: "No food name" });
   }
 
   const sanitizedFoodEntry = {
@@ -107,19 +96,18 @@ app.post("/addFoodToDailyLog", verifyToken, async (req, res) => {
     const existingData = userDoc.exists ? userDoc.data() : {};
     const monthData = existingData[monthKey] || {};
     const dayData = monthData[dayKey] || {};
-
-    // Update FoodItems for the day
+    // daily update for food
     const updatedFoodItems = dayData.FoodItems
       ? [...dayData.FoodItems, sanitizedFoodEntry]
       : [sanitizedFoodEntry];
 
-    // Calculate totalDailyCals for the day
+    //  get daily cals
     const totalDailyCals = updatedFoodItems.reduce(
       (sum, item) => sum + (isNaN(Number(item.Calories)) ? 0 : Number(item.Calories)),
       0
     );
 
-    // Calculate totalMonthlyCals by summing all totalDailyCals for the month
+    //get monthly cals
     const totalMonthlyCals = Object.entries(monthData).reduce((sum, [key, value]) => {
       if (key.startsWith("Day") && value?.totalDailyCals) {
         return sum + value.totalDailyCals;
@@ -127,30 +115,30 @@ app.post("/addFoodToDailyLog", verifyToken, async (req, res) => {
       return sum;
     }, totalDailyCals);
 
-    // Update Firestore
+    //  updates db
     await userDocRef.set(
       {
         [monthKey]: {
           ...monthData,
-          totalMonthlyCals, // Update total monthly calories
+          totalMonthlyCals,
           [dayKey]: {
             ...dayData,
             FoodItems: updatedFoodItems,
-            totalDailyCals, // Update total daily calories
+            totalDailyCals, 
           },
         },
       },
       { merge: true }
     );
 
-    res.status(200).send({ message: "Food item added and totals updated." });
+    res.status(200).send({ message: "Food items updated" });
   } catch (error) {
-    console.error("Error adding food to daily log:", error);
-    res.status(500).send({ error: "Failed to add food to daily log." });
+    console.error("Couldnt add food", error);
+    res.status(500).send({ error: "Couldn't add food to log" });
   }
 });
 
-// Check if the user has a daily log (updated to include totalDailyCals)
+// used to see if submitted to make sure no double render
 app.get("/checkDailyLog", verifyToken, async (req, res) => {
   const userId = req.user.uid;
 
@@ -159,7 +147,6 @@ app.get("/checkDailyLog", verifyToken, async (req, res) => {
     const userDoc = await userDocRef.get();
 
     if (!userDoc.exists) {
-      console.log("No data found for this user.");
       return res.status(200).send({ logExists: false, data: null });
     }
 
@@ -175,13 +162,11 @@ app.get("/checkDailyLog", verifyToken, async (req, res) => {
 
     res.status(200).send({ logExists: false, data: null });
   } catch (error) {
-    console.error("Error checking daily log:", error);
-    res.status(500).send({ error: "Failed to check daily log." });
+    res.status(500).send({ error: "Couldn't see daily log" });
   }
 });
 
-
-// Get user data
+// function that helps the ui see the log
 app.get("/getUserData", verifyToken, async (req, res) => {
   const userId = req.user.uid;
 
@@ -190,7 +175,6 @@ app.get("/getUserData", verifyToken, async (req, res) => {
     const userDoc = await userDocRef.get();
 
     if (!userDoc.exists) {
-      console.log("No data found for this user. Initializing document...");
       const timestamp = new Date().toISOString();
       const newUserData = {
         createdAt: timestamp,
@@ -203,12 +187,11 @@ app.get("/getUserData", verifyToken, async (req, res) => {
 
     res.status(200).send(userDoc.data());
   } catch (error) {
-    console.error("Error retrieving user data:", error);
-    res.status(500).send({ error: "Failed to retrieve user data." });
+    res.status(500).send({ error: "Couldn't get user data" });
   }
 });
 
-// Fetch all goals for a user
+// needed to display goals on UI
 app.get("/getGoals", verifyToken, async (req, res) => {
   const userId = req.user?.uid;
 
@@ -224,42 +207,36 @@ app.get("/getGoals", verifyToken, async (req, res) => {
     const goals = data?.goals || {};
     res.status(200).send({ goals });
   } catch (error) {
-    console.error("Error fetching goals:", error);
-    res.status(500).send({ error: "Failed to fetch goals." });
+    res.status(500).send({ error: "Error didn't detch goals" });
   }
 });
-app.post("/evaluateGoals", verifyToken, async (req, res) => {
+
+// this is used to see if goals met
+app.post("/goalevaluator", verifyToken, async (req, res) => {
   const userId = req.user?.uid;
 
-  try {
-    // Reference the user's document in userData collection
+  try { 
+    // basic code to get the user data, load in for each backend func
     const userDocRef = db.collection("userData").doc(userId);
     const userDoc = await userDocRef.get();
 
     if (!userDoc.exists) {
-      console.log("No user data found.");
-      return res.status(404).send({ error: "User data not found." });
+      return res.status(404).send({ error: "failed to load data" });
     }
 
     const userData = userDoc.data();
-
-    // Retrieve the current month key (using today's date to get the current month)
     const currentDate = new Date();
     const monthKey = `${currentDate.getFullYear()}${currentDate.getMonth() + 1}Log`;
-
-    // Access totalMonthlyCals from the monthKey data
+    // same as save data backend to access the monthly thing
     const totalMonthlyCals = userData[monthKey]?.totalMonthlyCals;
 
     if (!totalMonthlyCals || !userData.goals) {
       return res.status(400).send({ error: "Missing data for goal evaluation." });
     }
-
-    // Iterate through goals and update goalAchieved based on totalMonthlyCals
     const updatedGoals = {};
     for (const [goalId, goal] of Object.entries(userData.goals)) {
       const { category, goalValue } = goal;
-
-      // Update goalAchieved based on totalMonthlyCals for Nutrition category
+      // so this updates goals based on nutiriton met
       if (category === "Nutrition" && totalMonthlyCals >= goalValue) {
         updatedGoals[goalId] = { ...goal, goalAchieved: true };
       } else {
@@ -267,51 +244,20 @@ app.post("/evaluateGoals", verifyToken, async (req, res) => {
       }
     }
 
-    // Update goals in the user's document
     await userDocRef.update({ goals: updatedGoals });
 
-    res.status(200).send({ message: "Goals evaluated successfully.", updatedGoals });
+    res.status(200).send({ message: "Should work for goals", updatedGoals });
   } catch (error) {
-    console.error("Error evaluating goals:", error);
-    res.status(500).send({ error: "Failed to evaluate goals." });
+    res.status(500).send({ error: "error failed, check logs" });
   }
 });
 
-// Check if the user has a daily log
-app.get("/checkDailyLog", verifyToken, async (req, res) => {
-  const userId = req.user.uid;
-
-  try {
-    const userDocRef = db.collection("userData").doc(userId);
-    const userDoc = await userDocRef.get();
-
-    if (!userDoc.exists) {
-      console.log("No data found for this user.");
-      return res.status(200).send({ logExists: false, data: null });
-    }
-
-    const currentDate = new Date();
-    const monthKey = `${currentDate.getFullYear()}${currentDate.getMonth() + 1}Log`;
-    const dayKey = `Day${currentDate.getDate()}`;
-
-    const userData = userDoc.data();
-    const dailyLog = userData[monthKey]?.[dayKey];
-    if (dailyLog) {
-      return res.status(200).send({ logExists: true, data: dailyLog });
-    }
-
-    res.status(200).send({ logExists: false, data: null });
-  } catch (error) {
-    console.error("Error checking daily log:", error);
-    res.status(500).send({ error: "Failed to check daily log." });
-  }
-});
-app.post("/addGoal", verifyToken, async (req, res) => {
+app.post("/dbaddgoal", verifyToken, async (req, res) => {
   const { goalText, goalDate, category, goalValue } = req.body;
   const userId = req.user?.uid;
 
   if (!goalText || !goalDate || !category) {
-    return res.status(400).send({ error: "All fields are required." });
+    return res.status(400).send({ error: "All fields need to be filled." });
   }
 
   try {
@@ -321,9 +267,9 @@ app.post("/addGoal", verifyToken, async (req, res) => {
     const goalData = {
       goalText,
       goalDate,
-      category, // Work or Nutrition
-      goalValue: goalValue || null, // Numeric value if provided
-      timestamp: new Date().toISOString(), // Optional metadata
+      category, 
+      goalValue: goalValue || null, 
+      timestamp: new Date().toISOString(), 
       goalAchieved: false,
     };
 
@@ -332,9 +278,9 @@ app.post("/addGoal", verifyToken, async (req, res) => {
       const userData = userDoc.data();
       const goals = userData.goals || {};
       const goalCount = Object.keys(goals).length;
-      goalKey = `goal${goalCount + 1}`; // Next sequential goal key
+      goalKey = `goal${goalCount + 1}`;
     } else {
-      goalKey = "goal1"; // First goal if no goals exist
+      goalKey = "goal1"; 
     }
 
     await userDocRef.set(
@@ -345,28 +291,23 @@ app.post("/addGoal", verifyToken, async (req, res) => {
       },
       { merge: true }
     );
-
-    console.log(`Goal added successfully for user ${userId}`);
-    res.status(200).send({ message: "Goal added successfully!" });
+    res.status(200).send({ message: "Goal added" });
   } catch (error) {
-    console.error("Error adding goal:", error);
-    res.status(500).send({ error: "Failed to add goal." });
+    res.status(500).send({ error: "See logs goal failed" });
   }
 });
-app.get("/getDailyFoodLog", verifyToken, async (req, res) => {
+app.get("/dbfoodinfo", verifyToken, async (req, res) => {
   const userId = req.user.uid;
 
   try {
-    // Reference the user's document
+// usual data getter
     const userDocRef = db.collection("userData").doc(userId);
     const userDoc = await userDocRef.get();
 
     if (!userDoc.exists) {
-      console.log("No data found for this user.");
       return res.status(200).send({ logExists: false, data: [] });
     }
 
-    // Generate keys for the current month and day
     const currentDate = new Date();
     const monthKey = `${currentDate.getFullYear()}${currentDate.getMonth() + 1}Log`;
     const dayKey = `Day${currentDate.getDate()}`;
@@ -374,24 +315,18 @@ app.get("/getDailyFoodLog", verifyToken, async (req, res) => {
     const userData = userDoc.data();
     const dailyLog = userData[monthKey]?.[dayKey]?.FoodItems || [];
 
-    // If no log exists for the current day, return empty data
     if (!dailyLog.length) {
-      console.log("No food items found for today.");
       return res.status(200).send({ logExists: false, data: [] });
     }
 
-    // Return the food items for the current day
     res.status(200).send({ logExists: true, data: dailyLog });
   } catch (error) {
-    console.error("Error fetching daily food log:", error);
-    res.status(500).send({ error: "Failed to fetch daily food log." });
+    res.status(500).send({ error: "no food log" });
   }
 });
-// Check and update goal completion
 
 
-// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Backend Server ${PORT}`);
 });

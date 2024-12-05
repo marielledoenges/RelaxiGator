@@ -11,7 +11,7 @@ const FoodUI = () => {
       try {
         const token = await auth.currentUser.getIdToken();
         const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/getDailyFoodLog`,
+          `${process.env.REACT_APP_BACKEND_URL}/dbfoodinfo`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

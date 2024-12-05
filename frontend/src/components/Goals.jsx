@@ -50,7 +50,7 @@ const GoalsPage = () => {
     try {
       const token = await auth.currentUser.getIdToken();
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/addGoal`,
+        `${process.env.REACT_APP_BACKEND_URL}/dbaddgoal`,
         {
           method: "POST",
           headers: {
