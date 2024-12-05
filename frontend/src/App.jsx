@@ -9,18 +9,18 @@ import CalendarPage from "./pages/CalendarPage";
 import GoalsPage from "./pages/GoalsPage";
 
 function App() {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [authVar, authHook] = useState(false);
     const [userID, setUserID] = useState(null); 
     // this is where the user Id token is passed to backend
    
     const handleLogin = (retrievedUserID) => {
-        setIsAuthenticated(true);
+        authHook(true);
         setUserID(retrievedUserID);
     };
 
     // to remove cookies
     const handleLogout = () => {
-        setIsAuthenticated(false);
+        authHook(false);
         setUserID(null); 
     };
 
@@ -28,7 +28,7 @@ function App() {
         <Router>
             <div className="flex">
              
-                {isAuthenticated && <NavBar onLogout={handleLogout} />}
+                {authVar && <NavBar onLogout={handleLogout} />}
 
                 <div className="flex-grow">
                     <Routes>
@@ -36,7 +36,7 @@ function App() {
                         <Route
                             path="/login"
                             element={
-                                isAuthenticated ? (
+                                authVar ? (
                                     <Navigate to="/home" />
                                 ) : (
                                     <LoginPage onLogin={(userID) => handleLogin(userID)} />
@@ -47,7 +47,7 @@ function App() {
                         <Route
                             path="/nutrition"
                             element={
-                                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                                <ProtectedRoute authVar={authVar}>
                                     <NutritionPage userID={userID} /> 
                                 </ProtectedRoute>
                             }
@@ -56,7 +56,7 @@ function App() {
                         <Route
                             path="/calendar"
                             element={
-                                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                                <ProtectedRoute authVar={authVar}>
                                     <CalendarPage userID={userID} /> 
                                 </ProtectedRoute>
                             }
@@ -65,7 +65,7 @@ function App() {
                         <Route
                             path="/goals"
                             element={
-                                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                                <ProtectedRoute authVar={authVar}>
                                     <GoalsPage userID={userID} /> 
                                 </ProtectedRoute>
                             }
@@ -74,7 +74,7 @@ function App() {
                         <Route
                             path="/home"
                             element={
-                                isAuthenticated ? (
+                                authVar ? (
                                     <HomePage userID={userID} /> 
                                 ) : (
                                     <Navigate to="/login" />
@@ -84,7 +84,7 @@ function App() {
              
                         <Route
                             path="/"
-                            element={<Navigate to={isAuthenticated ? "/home" : "/login"} />}
+                            element={<Navigate to={authVar ? "/home" : "/login"} />}
                         />
                     </Routes>
                 </div>
