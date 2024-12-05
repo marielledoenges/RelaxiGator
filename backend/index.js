@@ -83,8 +83,6 @@ app.post("/saveUserData", verifyToken, async (req, res) => {
   }
 });
 
-// Add food to daily log
-// Add food to daily log
 app.post("/addFoodToDailyLog", verifyToken, async (req, res) => {
   const { Food, Calories = 0, Protein = "N/A" } = req.body;
   const userId = req.user?.uid;
@@ -230,6 +228,54 @@ app.get("/getGoals", verifyToken, async (req, res) => {
     res.status(500).send({ error: "Failed to fetch goals." });
   }
 });
+app.post("/evaluateGoals", verifyToken, async (req, res) => {
+  const userId = req.user?.uid;
+
+  try {
+    // Reference the user's document in userData collection
+    const userDocRef = db.collection("userData").doc(userId);
+    const userDoc = await userDocRef.get();
+
+    if (!userDoc.exists) {
+      console.log("No user data found.");
+      return res.status(404).send({ error: "User data not found." });
+    }
+
+    const userData = userDoc.data();
+
+    // Retrieve the current month key (using today's date to get the current month)
+    const currentDate = new Date();
+    const monthKey = `${currentDate.getFullYear()}${currentDate.getMonth() + 1}Log`;
+
+    // Access totalMonthlyCals from the monthKey data
+    const totalMonthlyCals = userData[monthKey]?.totalMonthlyCals;
+
+    if (!totalMonthlyCals || !userData.goals) {
+      return res.status(400).send({ error: "Missing data for goal evaluation." });
+    }
+
+    // Iterate through goals and update goalAchieved based on totalMonthlyCals
+    const updatedGoals = {};
+    for (const [goalId, goal] of Object.entries(userData.goals)) {
+      const { category, goalValue } = goal;
+
+      // Update goalAchieved based on totalMonthlyCals for Nutrition category
+      if (category === "Nutrition" && totalMonthlyCals >= goalValue) {
+        updatedGoals[goalId] = { ...goal, goalAchieved: true };
+      } else {
+        updatedGoals[goalId] = { ...goal, goalAchieved: false };
+      }
+    }
+
+    // Update goals in the user's document
+    await userDocRef.update({ goals: updatedGoals });
+
+    res.status(200).send({ message: "Goals evaluated successfully.", updatedGoals });
+  } catch (error) {
+    console.error("Error evaluating goals:", error);
+    res.status(500).send({ error: "Failed to evaluate goals." });
+  }
+});
 
 // Check if the user has a daily log
 app.get("/checkDailyLog", verifyToken, async (req, res) => {
@@ -278,6 +324,7 @@ app.post("/addGoal", verifyToken, async (req, res) => {
       category, // Work or Nutrition
       goalValue: goalValue || null, // Numeric value if provided
       timestamp: new Date().toISOString(), // Optional metadata
+      goalAchieved: false,
     };
 
     let goalKey;
@@ -340,6 +387,9 @@ app.get("/getDailyFoodLog", verifyToken, async (req, res) => {
     res.status(500).send({ error: "Failed to fetch daily food log." });
   }
 });
+// Check and update goal completion
+
+
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

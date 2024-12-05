@@ -7,12 +7,10 @@ const NavBar = ({ onLogout }) => {
             className="fixed top-0 left-0 w-full h-12 bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 font-mono text-white shadow-lg z-50
                 flex items-center justify-center"
         >
-            {/* Logo on the left */}
             <div className="absolute left-4 text-2xl font-bold tracking-[.38em]">
                 RELAXIGATOR
             </div>
 
-            {/* Navigation Links */}
             <div className="flex space-x-8">
                 <Link to="/home" className="hover:bg-gray-700 px-4 py-2 rounded">
                     Home

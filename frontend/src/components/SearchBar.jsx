@@ -46,7 +46,7 @@ const SearchBar = ({ setSelectedFood }) => {
       const nutritionData = await nutritionResponse.json();
 
       const cleanUnits = (value) =>
-        value?.replace(/[^\d]/g, "") || "N/A"; // Clean units and fallback to "N/A"
+        value?.replace(/[^\d]/g, "") || "N/A"; 
 
       const foodDetails = {
         name: food.name,

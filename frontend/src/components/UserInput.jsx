@@ -90,8 +90,27 @@ const UserInputForm = () => {
         setExistingLog(data); // Update local state
         setIsSubmitted(true);
         setIsEditing(false);
+        const evaluateResponse = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/evaluateGoals`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+  
+        if (evaluateResponse.ok) {
+          const { updatedGoals } = await evaluateResponse.json();
+          console.log("Goals updated successfully:", updatedGoals);
+        } else {
+          console.error("Failed to evaluate goals.");
+        }
         setTimeout(() => {
           setIsSubmitted(false);
+
+          
+          
         }, 2000);
       } else {
         const errorResponse = await response.json();

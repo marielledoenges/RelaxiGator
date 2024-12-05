@@ -28,23 +28,23 @@ const Nutrition = () => {
 
       if (response.ok) {
         setSuccessMessage(`${Food} added to your daily log!`);
-        setTimeout(() => setSuccessMessage(""), 3000); // Clear message after 3 seconds
+        setTimeout(() => setSuccessMessage(""), 3000); 
       } else {
         const errorResponse = await response.json();
         setErrorMessage(errorResponse.error || "Failed to add food to daily log.");
-        setTimeout(() => setErrorMessage(""), 3000); // Clear error after 3 seconds
+        setTimeout(() => setErrorMessage(""), 3000); 
       }
     } catch (error) {
       console.error("Error adding food to daily log:", error);
       setErrorMessage("An error occurred. Please try again.");
-      setTimeout(() => setErrorMessage(""), 3000); // Clear error after 3 seconds
+      setTimeout(() => setErrorMessage(""), 3000); 
     }
   };
 
   return (
     <div> 
     <div className="flex justify-center items-center mt-40 px-8 py-12 space-x-12">
-      {/* Left Panel: Search Bar and Results */}
+      
       <div className="w-1/3 font-mono bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 p-6 rounded-xl shadow-lg">
         <h2 className="text-xl font-bold text-gray-200 mb-4 text-center">
           Search for Food
@@ -52,7 +52,7 @@ const Nutrition = () => {
         <SearchBar setSelectedFood={setSelectedFood} />
       </div>
 
-      {/* Right Panel: Popup for Selected Food */}
+     
       {selectedFood && (
         <div className="w-1/3 font-mono bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 p-6 rounded-xl shadow-lg">
           <h2 className="text-xl font-bold text-gray-200 mb-4 text-center">
