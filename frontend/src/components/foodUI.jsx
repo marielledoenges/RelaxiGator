@@ -10,25 +10,25 @@ const FoodUI = () => {
     const fetchFoodLog = async () => {
       try {
         const token = await auth.currentUser.getIdToken();
-        const response = await fetch(
+        const getter = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}/dbfoodinfo`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
 
-        if (response.ok) {
-          const result = await response.json();
+        if (getter.ok) {
+          const result = await getter.json();
           if (result.logExists) {
             setFoodLogs(result.data);
           } else {
             setFoodLogs([]);
           }
         } else {
-          setErrorMessage("Failed to fetch food logs. Please try again later.");
+          setErrorMessage("Couldn't fetch food logs");
         }
       } catch (error) {
-        setErrorMessage("An error occurred while fetching the food log.");
+        setErrorMessage("err.");
       } finally {
         setLoading(false); // Ensure loading is disabled after fetch
       }

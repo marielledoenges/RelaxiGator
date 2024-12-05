@@ -12,11 +12,11 @@ app.use((req, res, next) => {
 });
 
  // so this is supposed to get the token needed for all backedn function and gets the required info from it
-const verifyToken = async (req, res, next) => {
+const certifyTK = async (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   try {
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    req.user = { uid: decodedToken.uid, email: decodedToken.email };
+    const noncryptotoken = await admin.auth().verifyIdToken(token);
+    req.user = { uid: noncryptotoken.uid, email: noncryptotoken.email };
     next();
   } catch (error) {
     console.error("cant verify token", error);
@@ -25,9 +25,9 @@ const verifyToken = async (req, res, next) => {
 };
 
 // major function that saves the data to db based on current month/data and gets relevant data
-app.post("/dbdatasave", verifyToken, async (req, res) => {
+app.post("/dbdatasave", certifyTK, async (req, res) => {
   const { Mood, Productivity, JournalEntry, Submitted, SubmissionDate } = req.body;
-  const userId = req.user?.uid;
+  const dbID = req.user?.uid;
 
   if (!Mood || !Productivity) {
     console.error("Mood and Productivity needed to save log");
@@ -35,13 +35,13 @@ app.post("/dbdatasave", verifyToken, async (req, res) => {
   }
 
   try {
-    const userDocRef = db.collection("userData").doc(userId);
+    const docreference = db.collection("userData").doc(dbID);
     const submissionDate = new Date(SubmissionDate || new Date());
     const monthKey = `${submissionDate.getFullYear()}${submissionDate.getMonth() + 1}Log`;
     const dayKey = `Day${submissionDate.getDate()}`;
 
-    const userDoc = await userDocRef.get();
-    const existingData = userDoc.exists ? userDoc.data()[monthKey]?.[dayKey] : {};
+    const getDBdoc = await docreference.get();
+    const existingData = getDBdoc.exists ? getDBdoc.data()[monthKey]?.[dayKey] : {};
 
     const updatedData = {
       Mood,
@@ -53,15 +53,15 @@ app.post("/dbdatasave", verifyToken, async (req, res) => {
       Timestamp: new Date().toISOString(),
     };
 
-    if (!userDoc.exists) {
-      await userDocRef.set({
+    if (!getDBdoc.exists) {
+      await docreference.set({
         createdAt: new Date().toISOString(),
         [monthKey]: {
           [dayKey]: updatedData,
         },
       });
     } else {
-      await userDocRef.update({
+      await docreference.update({
         [`${monthKey}.${dayKey}`]: updatedData,
       });
     }
@@ -72,9 +72,9 @@ app.post("/dbdatasave", verifyToken, async (req, res) => {
   }
 });
 
-app.post("/addFoodToDailyLog", verifyToken, async (req, res) => {
+app.post("/addFoodToDailyLog", certifyTK, async (req, res) => {
   const { Food, Calories = 0, Protein = "N/A" } = req.body;
-  const userId = req.user?.uid;
+  const dbID = req.user?.uid;
 
   if (!Food) {
     return res.status(400).send({ error: "No food name" });
@@ -87,13 +87,13 @@ app.post("/addFoodToDailyLog", verifyToken, async (req, res) => {
   };
 
   try {
-    const userDocRef = db.collection("userData").doc(userId);
-    const currentDate = new Date();
-    const monthKey = `${currentDate.getFullYear()}${currentDate.getMonth() + 1}Log`;
-    const dayKey = `Day${currentDate.getDate()}`;
+    const docreference = db.collection("userData").doc(dbID);
+    const getdate = new Date();
+    const monthKey = `${getdate.getFullYear()}${getdate.getMonth() + 1}Log`;
+    const dayKey = `Day${getdate.getDate()}`;
 
-    const userDoc = await userDocRef.get();
-    const existingData = userDoc.exists ? userDoc.data() : {};
+    const getDBdoc = await docreference.get();
+    const existingData = getDBdoc.exists ? getDBdoc.data() : {};
     const monthData = existingData[monthKey] || {};
     const dayData = monthData[dayKey] || {};
     // daily update for food
@@ -116,7 +116,7 @@ app.post("/addFoodToDailyLog", verifyToken, async (req, res) => {
     }, totalDailyCals);
 
     //  updates db
-    await userDocRef.set(
+    await docreference.set(
       {
         [monthKey]: {
           ...monthData,
@@ -139,22 +139,22 @@ app.post("/addFoodToDailyLog", verifyToken, async (req, res) => {
 });
 
 // used to see if submitted to make sure no double render
-app.get("/checkDailyLog", verifyToken, async (req, res) => {
-  const userId = req.user.uid;
+app.get("/checkDailyLog", certifyTK, async (req, res) => {
+  const dbID = req.user.uid;
 
   try {
-    const userDocRef = db.collection("userData").doc(userId);
-    const userDoc = await userDocRef.get();
+    const docreference = db.collection("userData").doc(dbID);
+    const getDBdoc = await docreference.get();
 
-    if (!userDoc.exists) {
+    if (!getDBdoc.exists) {
       return res.status(200).send({ logExists: false, data: null });
     }
 
-    const currentDate = new Date();
-    const monthKey = `${currentDate.getFullYear()}${currentDate.getMonth() + 1}Log`;
-    const dayKey = `Day${currentDate.getDate()}`;
+    const getdate = new Date();
+    const monthKey = `${getdate.getFullYear()}${getdate.getMonth() + 1}Log`;
+    const dayKey = `Day${getdate.getDate()}`;
 
-    const userData = userDoc.data();
+    const userData = getDBdoc.data();
     const dailyLog = userData[monthKey]?.[dayKey];
     if (dailyLog) {
       return res.status(200).send({ logExists: true, data: dailyLog });
@@ -167,43 +167,43 @@ app.get("/checkDailyLog", verifyToken, async (req, res) => {
 });
 
 // function that helps the ui see the log
-app.get("/getUserData", verifyToken, async (req, res) => {
-  const userId = req.user.uid;
+app.get("/getUserData", certifyTK, async (req, res) => {
+  const dbID = req.user.uid;
 
   try {
-    const userDocRef = db.collection("userData").doc(userId);
-    const userDoc = await userDocRef.get();
+    const docreference = db.collection("userData").doc(dbID);
+    const getDBdoc = await docreference.get();
 
-    if (!userDoc.exists) {
+    if (!getDBdoc.exists) {
       const timestamp = new Date().toISOString();
       const newUserData = {
         createdAt: timestamp,
         MonthlyLog: {},
       };
 
-      await userDocRef.set(newUserData);
+      await docreference.set(newUserData);
       return res.status(200).send(newUserData);
     }
 
-    res.status(200).send(userDoc.data());
+    res.status(200).send(getDBdoc.data());
   } catch (error) {
     res.status(500).send({ error: "Couldn't get user data" });
   }
 });
 
 // needed to display goals on UI
-app.get("/getGoals", verifyToken, async (req, res) => {
-  const userId = req.user?.uid;
+app.get("/getGoals", certifyTK, async (req, res) => {
+  const dbID = req.user?.uid;
 
   try {
-    const userDocRef = db.collection("userData").doc(userId);
-    const userDoc = await userDocRef.get();
+    const docreference = db.collection("userData").doc(dbID);
+    const getDBdoc = await docreference.get();
 
-    if (!userDoc.exists) {
+    if (!getDBdoc.exists) {
       return res.status(200).send({ goals: {} });
     }
 
-    const data = userDoc.data();
+    const data = getDBdoc.data();
     const goals = data?.goals || {};
     res.status(200).send({ goals });
   } catch (error) {
@@ -212,21 +212,21 @@ app.get("/getGoals", verifyToken, async (req, res) => {
 });
 
 // this is used to see if goals met
-app.post("/goalevaluator", verifyToken, async (req, res) => {
-  const userId = req.user?.uid;
+app.post("/goalevaluator", certifyTK, async (req, res) => {
+  const dbID = req.user?.uid;
 
   try { 
     // basic code to get the user data, load in for each backend func
-    const userDocRef = db.collection("userData").doc(userId);
-    const userDoc = await userDocRef.get();
+    const docreference = db.collection("userData").doc(dbID);
+    const getDBdoc = await docreference.get();
 
-    if (!userDoc.exists) {
+    if (!getDBdoc.exists) {
       return res.status(404).send({ error: "failed to load data" });
     }
 
-    const userData = userDoc.data();
-    const currentDate = new Date();
-    const monthKey = `${currentDate.getFullYear()}${currentDate.getMonth() + 1}Log`;
+    const userData = getDBdoc.data();
+    const getdate = new Date();
+    const monthKey = `${getdate.getFullYear()}${getdate.getMonth() + 1}Log`;
     // same as save data backend to access the monthly thing
     const totalMonthlyCals = userData[monthKey]?.totalMonthlyCals;
 
@@ -244,7 +244,7 @@ app.post("/goalevaluator", verifyToken, async (req, res) => {
       }
     }
 
-    await userDocRef.update({ goals: updatedGoals });
+    await docreference.update({ goals: updatedGoals });
 
     res.status(200).send({ message: "Should work for goals", updatedGoals });
   } catch (error) {
@@ -252,17 +252,17 @@ app.post("/goalevaluator", verifyToken, async (req, res) => {
   }
 });
 
-app.post("/dbaddgoal", verifyToken, async (req, res) => {
+app.post("/dbaddgoal", certifyTK, async (req, res) => {
   const { goalText, goalDate, category, goalValue } = req.body;
-  const userId = req.user?.uid;
+  const dbID = req.user?.uid;
 
   if (!goalText || !goalDate || !category) {
     return res.status(400).send({ error: "All fields need to be filled." });
   }
 
   try {
-    const userDocRef = db.collection("userData").doc(userId);
-    const userDoc = await userDocRef.get();
+    const docreference = db.collection("userData").doc(dbID);
+    const getDBdoc = await docreference.get();
 
     const goalData = {
       goalText,
@@ -274,8 +274,8 @@ app.post("/dbaddgoal", verifyToken, async (req, res) => {
     };
 
     let goalKey;
-    if (userDoc.exists) {
-      const userData = userDoc.data();
+    if (getDBdoc.exists) {
+      const userData = getDBdoc.data();
       const goals = userData.goals || {};
       const goalCount = Object.keys(goals).length;
       goalKey = `goal${goalCount + 1}`;
@@ -283,7 +283,7 @@ app.post("/dbaddgoal", verifyToken, async (req, res) => {
       goalKey = "goal1"; 
     }
 
-    await userDocRef.set(
+    await docreference.set(
       {
         goals: {
           [goalKey]: goalData,
@@ -296,23 +296,23 @@ app.post("/dbaddgoal", verifyToken, async (req, res) => {
     res.status(500).send({ error: "See logs goal failed" });
   }
 });
-app.get("/dbfoodinfo", verifyToken, async (req, res) => {
-  const userId = req.user.uid;
+app.get("/dbfoodinfo", certifyTK, async (req, res) => {
+  const dbID = req.user.uid;
 
   try {
 // usual data getter
-    const userDocRef = db.collection("userData").doc(userId);
-    const userDoc = await userDocRef.get();
+    const docreference = db.collection("userData").doc(dbID);
+    const getDBdoc = await docreference.get();
 
-    if (!userDoc.exists) {
+    if (!getDBdoc.exists) {
       return res.status(200).send({ logExists: false, data: [] });
     }
 
-    const currentDate = new Date();
-    const monthKey = `${currentDate.getFullYear()}${currentDate.getMonth() + 1}Log`;
-    const dayKey = `Day${currentDate.getDate()}`;
+    const getdate = new Date();
+    const monthKey = `${getdate.getFullYear()}${getdate.getMonth() + 1}Log`;
+    const dayKey = `Day${getdate.getDate()}`;
 
-    const userData = userDoc.data();
+    const userData = getDBdoc.data();
     const dailyLog = userData[monthKey]?.[dayKey]?.FoodItems || [];
 
     if (!dailyLog.length) {
