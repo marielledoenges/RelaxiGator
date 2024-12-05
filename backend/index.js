@@ -210,6 +210,53 @@ app.get("/dbgoals", checktoken, async (req, res) => {
     res.status(500).send({ error: "Can't find goals" });
   }
 });
+// Add a goal to the database
+app.post("/addGoal", verifyToken, async (req, res) => {
+  const { goalText, goalDate, category, goalValue } = req.body;
+  const userId = req.user?.uid;
+
+  if (!goalText || !goalDate || !category) {
+    return res.status(400).send({ error: "All fields are required." });
+  }
+
+  try {
+    const userDocRef = db.collection("userData").doc(userId);
+    const userDoc = await userDocRef.get();
+
+    const goalData = {
+      goalText,
+      goalDate,
+      category, // Work or Nutrition
+      goalValue: goalValue || null, // Numeric value if provided
+      timestamp: new Date().toISOString(), // Optional metadata
+    };
+
+    let goalKey;
+    if (userDoc.exists) {
+      const userData = userDoc.data();
+      const goals = userData.goals || {};
+      const goalCount = Object.keys(goals).length;
+      goalKey = `goal${goalCount + 1}`; // Next sequential goal key
+    } else {
+      goalKey = "goal1"; // First goal if no goals exist
+    }
+
+    await userDocRef.set(
+      {
+        goals: {
+          [goalKey]: goalData,
+        },
+      },
+      { merge: true }
+    );
+
+    console.log(`Goal added successfully for user ${userId}`);
+    res.status(200).send({ message: "Goal added successfully!" });
+  } catch (error) {
+    console.error("Error adding goal:", error);
+    res.status(500).send({ error: "Failed to add goal." });
+  }
+});
 
 // this is used to see if goals met
 app.post("/goalevaluator", checktoken, async (req, res) => {
