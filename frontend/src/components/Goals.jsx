@@ -12,14 +12,14 @@ const GoalsPage = () => {
   const [category, setCategory] = useState("");
   const [goalValue, setGoalValue] = useState("");
   const [goals, setGoals] = useState([]);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errormsg, errorhook] = useState("");
 
   useEffect(() => {
     const fetchGoals = async () => {
       try {
         const token = await auth.currentUser.getIdToken();
         const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/getGoals`,
+          `${process.env.REACT_APP_BACKEND_URL}/dbgoals`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -36,7 +36,7 @@ const GoalsPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!goalText || !goalDate || !category) {
-      setErrorMessage("Please fill in all required fields.");
+      errorhook("Please fill in all required fields.");
       return;
     }
 
@@ -50,7 +50,7 @@ const GoalsPage = () => {
     try {
       const token = await auth.currentUser.getIdToken();
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/addGoal`,
+        `${process.env.REACT_APP_BACKEND_URL}/dbaddgoal`,
         {
           method: "POST",
           headers: {
@@ -67,13 +67,13 @@ const GoalsPage = () => {
         setGoalDate("");
         setCategory("");
         setGoalValue("");
-        setErrorMessage("");
+        errorhook("");
       } else {
         const errorResponse = await response.json();
-        setErrorMessage(errorResponse.error || "Failed to add goal.");
+        errorhook(errorResponse.error || "Failed to add goal.");
       }
     } catch (error) {
-      setErrorMessage("An error occurred while adding the goal.");
+      errorhook("An error occurred while adding the goal.");
     }
   };
 
@@ -85,8 +85,8 @@ const GoalsPage = () => {
           <h2 className="text-2xl font-mono font-bold text-center text-gray-200">
             Add a Goal
           </h2>
-          {errorMessage && (
-            <div className="text-red-500 text-center text-sm">{errorMessage}</div>
+          {errormsg && (
+            <div className="text-red-500 text-center text-sm">{errormsg}</div>
           )}
           <input
             type="text"
@@ -136,30 +136,35 @@ const GoalsPage = () => {
 
       {/* Goals List */}
       <div className="p-6 rounded-xl shadow-lg w-full max-w-lg bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900">
-        <h2 className="text-2xl font-mono font-bold text-center text-gray-200">
-          Your Goals
-        </h2>
-        <div className="mt-4 space-y-4">
-          {goals.length > 0 ? (
-            goals.map((goal) => (
-              <div
-                key={goal.goalId}
-                className={`p-4 rounded-lg shadow-md ${GOAL_CATEGORIES.find(
-                  (cat) => cat.label === goal.category
-                )?.color}`}
-              >
-                <p>
-                  <strong>{goal.goalText}</strong>
-                  {goal.goalValue && ` - ${goal.goalValue}`}
-                </p>
-                <p className="text-sm text-gray-200">Due: {goal.goalDate}</p>
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-400 text-center">No goals added yet.</p>
-          )}
+  <h2 className="text-2xl font-mono font-bold text-center text-gray-200">
+    Your Goals
+  </h2>
+  <div className="mt-4 space-y-4">
+    {goals.length > 0 ? (
+      goals.map((goal) => (
+        <div
+          key={goal.goalId}
+          className={`p-4 rounded-lg shadow-md ${GOAL_CATEGORIES.find(
+            (cat) => cat.label === goal.category
+          )?.color}`} 
+        >
+          <p className="flex items-center justify-between">
+            <span>
+              <strong>{goal.goalText}</strong>
+              {goal.goalValue && ` - ${goal.goalValue}`}
+            </span>
+            <span className="text-sm text-gray-200">
+              {goal.goalAchieved ? "✅" : "❌"}
+            </span>
+          </p>
+          <p className="text-sm text-gray-200">Due: {goal.goalDate}</p>
         </div>
-      </div>
+      ))
+    ) : (
+      <p className="text-gray-400 text-center">No goals added yet.</p>
+    )}
+  </div>
+</div>
     </div>
   );
 };

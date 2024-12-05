@@ -1,14 +1,13 @@
 const admin = require("firebase-admin");
 const serviceAccount = require("./serviceAccountKey.json");
 
-// Ensure Firebase Admin SDK is initialized only once
+// init the app and get creds
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    databaseURL: "https://(default).firebaseio.com", // Replace with your database URL
+    databaseURL: "https://(default).firebaseio.com", 
   });
 }
-
 const db = admin.firestore();
 
-module.exports = { admin, db }; // Export both admin and db
+module.exports = { admin, db }; 

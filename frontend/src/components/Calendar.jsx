@@ -1,108 +1,110 @@
 import React, { useState, useEffect } from "react";
-import Calendar from "react-calendar"; // install react-calendar
-import "react-calendar/dist/Calendar.css"; // import calendar styles
-import { auth } from "../firebase/firebase"; // firebase authentication
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
+import { auth } from "../firebase/firebase";
 
 const CalendarComponent = () => {
-  const [userLogs, setUserLogs] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [logData, setLogData] = useState(null);
+  const [dblogs, setdblogs] = useState([]);
+  const [inputdatevar, setinputdatevar] = useState(new Date());
+  const [calendarloghook, setcalendarloghook] = useState(null);
 
   useEffect(() => {
-    // Fetch user logs from the backend when the component mounts
     const fetchLogs = async () => {
       try {
         const token = await auth.currentUser.getIdToken();
         const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/getUserLogsForYear?year=2024`,
+          `${process.env.REACT_APP_BACKEND_URL}/dbuserdata`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }
         );
+
         if (response.ok) {
           const data = await response.json();
-          setUserLogs(data);
+          setdblogs(data);
         } else {
-          console.error("Failed to fetch user logs.");
+          console.error("Error logged, check firebase DB if entry exists");
         }
       } catch (error) {
-        console.error("Error fetching user logs:", error);
+        console.error("Error logged, check firebase DB if entry exists", error);
       }
     };
 
     fetchLogs();
   }, []);
 
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
-    const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+  const datehook = (date) => {
+    setinputdatevar(date);
+    const monthKey = `${date.getFullYear()}${date.getMonth() + 1}Log`;
+    const dayKey = `Day${date.getDate()}`;
 
-    // Find log data for the selected date
-    const log = userLogs.find((log) => log.date === formattedDate);
-    if (log) {
-      setLogData(log.log);
-    } else {
-      setLogData(null); // No log data for the selected day
-    }
+    const log = dblogs[monthKey]?.[dayKey] || null;
+    setcalendarloghook(log);
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-pink-300 to-purple-400">
-      <div className="w-full max-w-4xl bg-white p-8 rounded-xl shadow-lg">
-        <h2 className="text-4xl font-bold text-center text-gray-800 mb-8">
+    <div className="flex justify-center items-start min-h-screen font-mono px-8 py-12 mt-[-2rem]">
+      {/* Calendar Section */}
+      <div className="p-6 rounded-xl shadow-lg w-full max-w-md bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 mr-8">
+        <h2 className="text-2xl font-mono font-bold text-center text-gray-200 mb-4">
           Wellness Log Calendar
         </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Calendar Section */}
-          <div className="flex justify-center">
-            <Calendar
-              onChange={handleDateChange}
-              value={selectedDate}
-              tileClassName={({ date, view }) => {
-                // Add a custom class if there's a log for that date
-                const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-                if (userLogs.some((log) => log.date === formattedDate)) {
-                  return "highlight-day"; // Highlight days with logs
-                }
-                return "";
-              }}
-            />
-          </div>
-
-          {/* Log Data Section */}
-          <div className="flex flex-col justify-center">
-            <h3 className="text-3xl font-semibold text-gray-700">Selected Day</h3>
-            <p className="text-lg text-gray-600 mb-6">{selectedDate.toDateString()}</p>
-
-            {logData ? (
-              <div className="p-6 bg-purple-100 rounded-lg">
-                <h4 className="font-semibold text-purple-700 text-xl mb-4">Log Data</h4>
-                <p>
-                  <strong>Mood:</strong> {logData.Mood}
-                </p>
-                <p>
-                  <strong>Productivity:</strong> {logData.Productivity} hours
-                </p>
-                <p>
-                <strong>Food Items:</strong>{" "}
-                {Array.isArray(logData.FoodItems)
-                ? logData.FoodItems.map((item) => `${item.Food}`).join(", ")
-                : "N/A"}
-                </p>
-                <p>
-                  <strong>Journal Entry:</strong> {logData.JournalEntry || "N/A"}
-                </p>
-              </div>
-            ) : (
-              <div className="p-6 bg-gray-200 rounded-lg">
-                <p className="text-gray-500">No log data for this day. Empty.</p>
-              </div>
-            )}
-          </div>
+        <div className="flex justify-center">
+          <Calendar
+            onChange={datehook}
+            value={inputdatevar}
+            tileClassName={({ date }) => {
+              const dbdate = `${
+                date.getMonth() + 1
+              }/${date.getDate()}/${date.getFullYear()}`;
+              const monthKey = `${date.getFullYear()}${date.getMonth() + 1}Log`;
+              const dayKey = `Day${date.getDate()}`;
+              return dblogs[monthKey]?.[dayKey]
+                ? "highlight-day bg-blue-600 text-white rounded-md"
+                : "";
+            }}
+            className="rounded-md text-gray-900 bg-gray-200 shadow-inner p-2"
+          />
         </div>
+      </div>
+
+      {/* Log Data Section */}
+      <div className="p-4 rounded-xl shadow-lg w-full max-w-sm bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900">
+        <h2 className="text-xl font-mono font-bold text-center text-gray-200 mb-3">
+          Selected Day
+        </h2>
+        <p className="text-xs text-slate-400 text-center mb-3">
+          {inputdatevar.toDateString()}
+        </p>
+
+        {calendarloghook ? (
+          <div className="p-3 bg-gradient-to-br from-purple-600 via-pink-600 to-orange-600 rounded-lg shadow-md">
+            <p className="text-slate-100 text-xs">
+              <strong className="text-slate-200">Mood:</strong> {calendarloghook.Mood}
+            </p>
+            <p className="text-slate-100 text-xs">
+              <strong className="text-slate-200">Productivity:</strong>{" "}
+              {calendarloghook.Productivity}{" "}
+              {calendarloghook.Productivity === 1 ? "hour" : "hours"}
+            </p>
+            <p className="text-slate-100 text-xs">
+              <strong className="text-slate-200">Total Calories:</strong>{" "}
+              {calendarloghook.totalDailyCals || 0} cals
+            </p>
+            <p className="text-slate-100 text-xs">
+              <strong className="text-slate-200">Journal Entry:</strong>{" "}
+              {calendarloghook.JournalEntry || "N/A"}
+            </p>
+          </div>
+        ) : (
+          <div className="p-3 bg-gray-700 rounded-lg shadow-md">
+            <p className="text-slate-300 text-center text-xs">
+              No log data for this day.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
