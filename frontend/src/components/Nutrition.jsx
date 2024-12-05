@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import SearchBar from "./SearchBar";
 import { auth } from "../firebase/firebase";
-
+import FoodUI from "./foodUI";
 const Nutrition = () => {
   const [selectedFood, setSelectedFood] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
@@ -42,7 +42,8 @@ const Nutrition = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen px-8 py-12 space-x-12">
+    <div> 
+    <div className="flex justify-center items-center mt-40 px-8 py-12 space-x-12">
       {/* Left Panel: Search Bar and Results */}
       <div className="w-1/3 font-mono bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 p-6 rounded-xl shadow-lg">
         <h2 className="text-xl font-bold text-gray-200 mb-4 text-center">
@@ -87,6 +88,11 @@ const Nutrition = () => {
           )}
         </div>
       )}
+     
+    </div>
+    <div className="mt-32 ">
+            <FoodUI />
+          </div>
     </div>
   );
 };
