@@ -1,7 +1,7 @@
 const admin = require("firebase-admin");
 const serviceAccount = require("./serviceAccountKey.json");
 
-// init the app and get creds, reference: format from firebase website for javascript apps
+// init the app and get creds, reference: https://firebase.google.com/docs/reference/js
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),

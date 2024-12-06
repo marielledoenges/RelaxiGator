@@ -8,7 +8,7 @@ import { auth, googleProvider } from "../firebase/firebase";
 import { useNavigate } from "react-router-dom";
 
 // response monitoring with bearer authentication referenced from:  https://dev.to/earthcomfy/build-authentication-using-firebase-react-express-28ig?comments_sort=oldest
-
+// line(40)
 // login/password setup referenced from: https://blog.logrocket.com/authentication-react-router-v6/
 const Login = ({ checklogin }) => {
   const [email, emailhook] = useState("");

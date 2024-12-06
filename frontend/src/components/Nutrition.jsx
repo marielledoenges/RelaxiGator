@@ -7,7 +7,7 @@ const Nutrition = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [errormsg, errorhook] = useState("");
 
-  // response monitoring with bearer authentication referenced from:  https://dev.to/earthcomfy/build-authentication-using-firebase-react-express-28ig?comments_sort=oldest
+  // response monitoring with bearer authentication referenced from:  https://dev.to/earthcomfy/build-authentication-using-firebase-react-express-28ig?comments_sort=oldest (line 24)
   const handleAddToDailyLog = async () => {
     if (!selectedFood) return;
 
