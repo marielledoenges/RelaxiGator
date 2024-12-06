@@ -9,6 +9,7 @@ const SearchBar = ({ setSelectedFood }) => {
 
   const apiKey = process.env.REACT_APP_SPOONACULAR_API_KEY;
 
+  // response monitoring with bearer authentication referenced from:  https://dev.to/earthcomfy/build-authentication-using-firebase-react-express-28ig?comments_sort=oldest (line 70)
   const fetchResults = async (spoonacularsearchq) => {
     if (!spoonacularsearchq) return;
     setloadbar(true);

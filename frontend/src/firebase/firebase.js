@@ -3,7 +3,7 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-// Firebase configuration using environment variables
+// firebase configuration using environment variables, reference: https://firebase.google.com/docs/reference/js
 const dbconfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
@@ -13,16 +13,16 @@ const dbconfig = {
   appId: process.env.REACT_APP_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
+// init Firebase
 const app = initializeApp(dbconfig);
 
-// Initialize Firebase services
+// init Firebase services
 const auth = getAuth(app);      // For Firebase Authentication
 const db = getFirestore(app);   // For Firestore Database
 const storage = getStorage(app); // For Firebase Storage
 
-// Google Auth Provider setup
+// init google Auth Provider setup
 const googleProvider = new GoogleAuthProvider();
 
-// Export initialized services and provider
+// export initialized services and provider
 export { app, auth, db, storage, googleProvider };

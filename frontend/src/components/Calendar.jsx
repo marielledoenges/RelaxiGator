@@ -3,6 +3,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { auth } from "../firebase/firebase";
 
+// response monitoring with bearer authentication referenced from:  https://dev.to/earthcomfy/build-authentication-using-firebase-react-express-28ig?comments_sort=oldest
 const CalendarComponent = () => {
   const [dblogs, setdblogs] = useState([]);
   const [inputdatevar, setinputdatevar] = useState(new Date());

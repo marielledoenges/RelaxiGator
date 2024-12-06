@@ -6,6 +6,7 @@ const GOAL_CATEGORIES = [
   { label: "Nutrition", color: "bg-pink-500 text-white" },
 ];
 
+// response monitoring with bearer authentication referenced from:  https://dev.to/earthcomfy/build-authentication-using-firebase-react-express-28ig?comments_sort=oldest
 const GoalsPage = () => {
   const [goalText, setGoalText] = useState("");
   const [goalDate, setGoalDate] = useState("");

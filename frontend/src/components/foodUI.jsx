@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { auth } from "../firebase/firebase";
 
+// // response monitoring with bearer authentication referenced from:  https://dev.to/earthcomfy/build-authentication-using-firebase-react-express-28ig?comments_sort=oldest
 const FoodUI = () => {
   const [foodLogs, setFoodLogs] = useState([]);
   const [loading, setLoading] = useState(true);

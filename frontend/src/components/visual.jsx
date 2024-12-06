@@ -22,7 +22,7 @@ const GoalVis = () => {
     ],
   };
 
-  const OPTIONS = {
+  const CHART_OPTIONS = {
     responsive: true,
     plugins: {
       legend: {
@@ -54,7 +54,7 @@ const GoalVis = () => {
         Yesterday's Goals Progress
       </h2>
       <div className="mt-4 mx-auto w-[400px] h-[300px]">
-        <Bar data={DATA} options={OPTIONS} />
+        <Bar data={DATA} options={CHART_OPTIONS} />
       </div>
     </div>
   </div>
