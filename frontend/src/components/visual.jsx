@@ -10,10 +10,10 @@ const GoalVis = () => {
     labels: ["Calories (Goal: 6000)", "Productivity (Goal: 100)"],
     datasets: [
       {
-        label: "Today's Progress",
+        label: "Yesterday's Progress",
         data: [
-          Math.min(5770 / 6000, 1) * 100, 
-          Math.min(30 / 100, 1) * 100, 
+          Math.min(5400 / 6000, 1) * 100, 
+          Math.min(18 / 100, 1) * 100, 
         ],
         backgroundColor: ["#FF6384", "#36A2EB"],
         borderColor: ["#FF6384", "#36A2EB"],

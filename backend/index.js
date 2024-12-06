@@ -51,6 +51,7 @@ app.post("/dbdatasave", checktoken, async (req, res) => {
       Submitted: Submitted || false,
       SubmissionDate: SubmissionDate || new Date().toISOString(),
       Timestamp: new Date().toISOString(),
+
     };
 
     if (!getDBdoc.exists) {
@@ -210,7 +211,7 @@ app.get("/dbgoals", checktoken, async (req, res) => {
     res.status(500).send({ error: "Can't find goals" });
   }
 });
-// Add a goal to the database
+
 // this is used to see if goals met
 app.post("/goalevaluator", checktoken, async (req, res) => {
   const dbID = req.user?.uid;
