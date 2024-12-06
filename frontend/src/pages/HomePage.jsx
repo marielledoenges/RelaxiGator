@@ -1,5 +1,6 @@
 import React from "react";
 import Userlogform from "../components/Userlogform";
+import GoalVis from "../components/visual";
 import { Link } from "react-router-dom";
 
 const HomePage = () => {
@@ -11,6 +12,8 @@ const HomePage = () => {
         <div className="p-8">
           
           <Userlogform />
+          <GoalVis/>
+
         </div>
       </div>
     </div>
